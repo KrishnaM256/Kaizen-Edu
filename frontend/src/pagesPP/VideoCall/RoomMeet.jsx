@@ -3,18 +3,42 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { Container, Typography, Button, Box } from "@mui/material";
 import { ExitToApp } from "@mui/icons-material";
-
+import axios from "axios";
+const API = import.meta.env.VITE_BACKEND_URL;
 function RoomMeet() {
   const { roomId } = useParams();
+  const { classId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const zpRef = useRef(null);
   const videoContainerRef = useRef(null);
   const [joined, setJoined] = useState(false);
   const [callType, setCallType] = useState("");
+
   const APP_ID = 1199460465;
   const SECRET = "841c556067da90c047308ae1ea221cdc";
 
+  const addMeetingLink=async()=>{
+    const meetinglink=window.location.href;
+    try {
+      await axios.post(`${API}/meetlink/addmeetlink`,{
+        classId,
+        name:"Your name",
+        url:meetinglink,
+      });
+      console.log("meeting link added succesfuly");
+    } catch (error) {
+      console.log('failed to add meet link ');
+    }
+  }
+  const deleteMeetingLink = async () => {
+    try {
+      await axios.delete(`${API}/meetlink/deletemeetlink/${classId}`);
+      console.log("Meeting link deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete meeting link:", error);
+    }
+  };
   // Initialize ZegoUIKit and join room on component mount
   const myMeeting = (type) => {
     const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
@@ -53,10 +77,12 @@ function RoomMeet() {
       onJoinRoom: () => {
         console.log("Joined Room"); // Debugging
         setJoined(true);
+        addMeetingLink();
       },
       onLeaveRoom: () => {
         console.log("Left Room"); // Debugging
         navigate("/main");
+        deleteMeetingLink();
       },
     });
   };

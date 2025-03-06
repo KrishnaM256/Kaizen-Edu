@@ -17,7 +17,9 @@ import timetableRoute from './route/timetable.route.js'
 import quizRoute from './route/quiz.route.js'
 import QuizResult from './route/quizresult.route.js'
 import Dashbaord from './route/dashboard.route.js'
+import MeetLink from './route/meetlink.route.js'
 const Frontend_URL = process.env.Frontend_URL
+
 
 connectDB()
 
@@ -45,6 +47,7 @@ app.use('/post', postRoute)
 app.use('/quiz',quizRoute)
 app.use('/quizresult',QuizResult);
 app.use('/dashboard',Dashbaord)
+app.use('/meetlink',MeetLink);
 
 app.listen(PORT, () => {
   console.log(`server run on port ${PORT}`)

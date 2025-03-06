@@ -133,6 +133,11 @@ export default function Main(props) {
       icon: <HomeIcon />,
     },
     {
+      segment: 'class',
+      title: 'Home',
+      icon: <CalendarMonthIcon />,
+    },
+    {
       kind: 'divider',
     },
     {
@@ -260,6 +265,7 @@ export default function Main(props) {
           {router.pathname == '/class' && (
             <AllTeaching useDemoRouter={useDemoRouter} />
           )}
+          {router.pathname=='/calender && <CalenderPage/>'}
           {router.pathname == '/createClass' && <CreateClass />}
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}

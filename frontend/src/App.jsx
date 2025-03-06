@@ -38,7 +38,7 @@ function App() {
           <Route path="/takepicture/:vivaId" element={<TakePicture />} />
           <Route path="/give-viva/:vivaId" element={<GiveViva />} />
           {/* <Route path="/room" element={<VideoMeeting />} />{} */}
-          <Route path="/room/:roomId" element={<RoomMeet />} />
+          <Route path="/room/:classId/:roomId" element={<RoomMeet />} />
           <Route path="/class/:id" element={<ClassPage />} />
           <Route path="/lecture/:id" element={<LecturePage />} />
           <Route path="/temp" element={<temp/>}/>

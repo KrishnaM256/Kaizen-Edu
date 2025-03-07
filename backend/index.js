@@ -48,6 +48,7 @@ app.use('/quiz',quizRoute)
 app.use('/quizresult',QuizResult);
 app.use('/dashboard',Dashbaord)
 app.use('/meetlink',MeetLink);
+app.use('/timetable',timetableRoute);
 
 app.listen(PORT, () => {
   console.log(`server run on port ${PORT}`)

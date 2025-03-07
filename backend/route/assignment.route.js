@@ -9,6 +9,7 @@ import {
   updateSubmissionResult,
   getAssignmentsWithSubmissions,
   getAssignmentsWithSubmissionsByAssignmentId,
+  getAssignmentsByStudentId,
 } from '../controler/assignment.controler.js'
 import upload from '../middlewares/upload.js'
 import multer from 'multer'
@@ -70,5 +71,7 @@ router.get(
   '/teacher/assignment/:assignmentId',
   getAssignmentsWithSubmissionsByAssignmentId
 )
+// get result of assignement using studentid 
+router.get('/:studentId',getAssignmentsByStudentId);
 
 export default router

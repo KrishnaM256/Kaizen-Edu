@@ -1,4 +1,6 @@
 import Assignment from '../model/assignment.model.js'
+import Class from '../model/class.model.js'; // Import the Class model
+
 import mongoose from 'mongoose'
 
 // Create a new assignment
@@ -216,3 +218,36 @@ export const getAssignmentsWithSubmissionsByAssignmentId = async (req, res) => {
     })
   }
 }
+
+export const getAssignmentsByStudentId = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // Step 1: Find all assignments where the submissions array contains the studentId
+    const assignments = await Assignment.find({
+      'submissions.studentId': studentId,
+    });
+
+    if (!assignments || assignments.length === 0) {
+      return res.status(404).json({ message: 'No assignments found for the student' });
+    }
+
+    // Step 2: Fetch class details for each assignment and combine the results
+    const assignmentsWithClassDetails = await Promise.all(
+      assignments.map(async (assignment) => {
+        const classDetails = await Class.findById(assignment.classId); // Fetch class details using classId
+        return {
+          ...assignment.toObject(), // Convert Mongoose document to plain object
+          classDetails: classDetails || null, // Include class details
+        };
+      })
+    );
+
+    res.status(200).json(assignmentsWithClassDetails);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching assignments with submissions and class details',
+      error: error.message,
+    });
+  }
+};

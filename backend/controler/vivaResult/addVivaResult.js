@@ -18,10 +18,12 @@ export const addVivaResult = async (req, res) => {
                 totalScore += parseFloat(scoreMatch[1]);
             }
         });
-        // Calculate score out of 10 considering totalQuestions
-        const averageScore = attemptedCount > 0 ? (totalScore / attemptedCount) : 0;
-        const finalScore = (averageScore * attemptedCount / totalQuestions) * 10;
-        
+
+        // Calculate overall mark as a percentage out of 100%
+        const totalPossibleScore = totalQuestions * 10; // Each question is out of 10
+        const overallMark = (totalScore / totalPossibleScore) * 100;
+        const roundedOverallMark = Math.round(overallMark);
+
         const newVivaResult = new VivaResult({
             vivaId,
             studentId,
@@ -29,7 +31,7 @@ export const addVivaResult = async (req, res) => {
             totalQuestions,
             questionAnswerSet,
             dateOfViva,
-            overallMark:finalScore,
+            overallMark:roundedOverallMark,
             proctoredFeedback
         });
         const savedVivaResult = await newVivaResult.save();

@@ -17,8 +17,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility'
 import InsightsIcon from '@mui/icons-material/Insights'
 import PersonIcon from '@mui/icons-material/Person'
 import SchoolIcon from '@mui/icons-material/School'
-import SettingsIcon from '@mui/icons-material/Settings'
-import LockIcon from '@mui/icons-material/Lock'
+import ProfileIcon from '@mui/icons-material/AccountCircleRounded';import LockIcon from '@mui/icons-material/Lock'
 import PaletteIcon from '@mui/icons-material/Palette'
 import { AppProvider } from '@toolpad/core/AppProvider'
 import { DashboardLayout } from '@toolpad/core/DashboardLayout'
@@ -34,6 +33,7 @@ import Dashboard from '@mui/icons-material/Dashboard'
 import AllTeaching from '../pagesKM/Pages/AllTeaching'
 import AssignMents from '../pagesKM/Pages/AssignMents'
 import DashboardPage from '../pagesKM/Pages/DashboardPage'
+import Calender from '../pagesPP/Calender/Calender'
 import logo from './../assets/logo.png'
 import CreateClass from '../pagesKM/Pages/CreateClass'
 import { useGetAllClassesQuery } from '../redux/api/classApiSlice'
@@ -42,6 +42,7 @@ import UsersPage from '../pagesKM/Pages/UsersPage'
 import TimetableGeneratorPage from '../pagesKM/Pages/TimetableGeneratorPage'
 import TimetablePage from '../pagesKM/Pages/TimetablePage'
 import Temp from '../Component/Temp';
+import Profile from '../pagesPP/Profile/Profile'
 
 const demoTheme = extendTheme({
   colorSchemes: { light: true },
@@ -133,8 +134,8 @@ export default function Main(props) {
       icon: <HomeIcon />,
     },
     {
-      segment: 'class',
-      title: 'Home',
+      segment: 'calender',
+      title: 'Calender',
       icon: <CalendarMonthIcon />,
     },
     {
@@ -175,9 +176,6 @@ export default function Main(props) {
       kind: 'divider',
     },
     {
-      kind: 'divider',
-    },
-    {
       kind: 'header',
       title: 'User Management',
     },
@@ -194,9 +192,9 @@ export default function Main(props) {
       title: 'Settings',
     },
     {
-      segment: 'settings',
-      title: 'Settings',
-      icon: <SettingsIcon />,
+      segment: 'profile',
+      title: 'Profile',
+      icon: <ProfileIcon />,
     },
     {
       segment: 'security',
@@ -262,10 +260,11 @@ export default function Main(props) {
           }}
         >
           {router.pathname == '/dashboard' && <DashboardPage />}
+          {router.pathname=='/calender' && <Calender/>}
+          {router.pathname=='/profile' && <Profile/>}
           {router.pathname == '/class' && (
             <AllTeaching useDemoRouter={useDemoRouter} />
           )}
-          {router.pathname=='/calender && <CalenderPage/>'}
           {router.pathname == '/createClass' && <CreateClass />}
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}

@@ -237,3 +237,29 @@ export const getAllPublicClasses = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error', error })
   }
 }
+
+
+
+export const getclassbyuserid = async (req, res) => {
+  try {
+    const { userid } = req.params;
+
+    // Find all classes where the student is in the 'students' array
+    const classes = await Class.find({ students: userid }).select('_id name');
+
+    if (!classes || classes.length === 0) {
+      return res.status(404).json({ message: 'No classes found for this student' });
+    }
+
+    // Format the response to include class ID and class name
+    const formattedClasses = classes.map(cls => ({
+      classid: cls._id,
+      classname: cls.name,
+    }));
+
+    res.status(200).json({ classes: formattedClasses });
+  } catch (error) {
+    console.error('Error fetching classes by user ID:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};

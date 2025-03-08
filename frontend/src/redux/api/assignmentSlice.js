@@ -104,17 +104,28 @@ const assignmentApiSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ['Assignment'],
     }),
+
     getAssignmentsWithSubmissionsByAssignmentId: builder.query({
       query: (assignmentId) => ({
         url: `${ASSIGNMENT_URL}/teacher/assignment/${assignmentId}`,
         credentials: 'include',
       }),
     }),
-
+ getStudentAssignmentResult: builder.query({
+      query: ({ studentId, assignmentId }) => ({
+        url: `${ASSIGNMENT_URL}/getStudentAssignmentResult`,
+        method: 'POST',
+        body: { studentId, assignmentId },
+      }),
+      providesTags: (result, error, { studentId, assignmentId }) => [
+        { type: 'Submission', id: assignmentId },
+        { type: 'Submission', id: studentId },
+      ],
+    }),
     // Get the result for a specific submission (by assignment ID and student ID)
     getSubmissionResult: builder.query({
       query: ({ assignmentId, studentId }) => ({
-        url: `${ASSIGNMENT_URL}/${assignmentId}/result/${studentId}`,
+        url: `${ASSIGNMENT_URL}/result/${assignmentId}/${studentId}`,
         credentials: 'include',
       }),
       providesTags: (result, error, { assignmentId, studentId }) => [
@@ -137,4 +148,5 @@ export const {
   useGetAssignmentsWithSubmissionsQuery,
   useGetSubmissionResultQuery,
   useGetAssignmentsWithSubmissionsByAssignmentIdQuery,
+  useGetStudentAssignmentResultQuery
 } = assignmentApiSlice

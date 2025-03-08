@@ -1,8 +1,5 @@
-import React from 'react';
-import { useState } from "react";
+import React, { useEffect, useState } from 'react';
 import { Bar, Pie } from 'react-chartjs-2';
-import { useEffect } from 'react';
-import { BASE_URL } from '../redux/constants';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,9 +9,9 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useGetSubmissionResultQuery } from '../redux/api/assignmentSlice';
-import { useSelector } from 'react-redux';
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -24,68 +21,81 @@ ChartJS.register(
   Legend
 );
 
-const Studentreport2 = () => {
-  const {assignmentId} = useParams()
- const location = useLocation();
-  const { studentId } = location.state || {}; // Extract student ID from location state
-const {userInfo} = useSelector(state=>state.user)
+const Studentreport3 = () => {
+  const location = useLocation();
+  const { studentId, assignmentId } = location.state || {};
+  const { data: resultData, error: resultError, isLoading: resultLoading } = useGetSubmissionResultQuery({ assignmentId, studentId });
+
   const [reportData, setReportData] = useState({
     results: [],
     totalScore: 0,
     assignmentTitle: 'Evaluation Report',
   });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchReportData = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/assignments/${studentId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch report data');
-        }
-        const data = await response.json();
-        console.log(data);
+  const fetchAndParseResults = async (resultsString) => {
+    try {
+      console.log("Sending results string to Flask backend...");
+      console.log(resultsString);
+      const parseResponse = await fetch('http://127.0.0.1:5000/parsejson', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ input_string: resultsString }),
+      });
+      console.log("Parse response status:", parseResponse.status);
 
-        // Assuming the backend returns an array of assignments with submissions
-        // Find the specific assignment and extract the results
-        const assignment = data.find((assignment) =>
-          assignment.submissions.some((submission) => submission.studentId === studentId)
-        );
-
-        if (!assignment) {
-          throw new Error('No assignment found for the student');
-        }
-
-        const submission = assignment.submissions.find(
-          (sub) => sub.studentId === studentId
-        );
-
-        if (!submission) {
-          throw new Error('No submission found for the student');
-        }
-
-        setReportData({
-          results: submission.result.results,
-          totalScore: submission.result.total_score,
-          assignmentTitle: assignment.title,
-        });
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      if (!parseResponse.ok) {
+        const errorText = await parseResponse.text();
+        console.error("Parse response error:", errorText);
+        throw new Error(`Server error: ${errorText}`);
       }
-    };
 
-    if (studentId) {
-      fetchReportData();
-    } else {
-      setError('No student ID provided');
+      const parsedData = await parseResponse.json();
+      console.log("Parsed data:", parsedData);
+
+      // Extract the `results` array from the parsed data
+      const resultsArray = parsedData.results;
+
+      // Update the state with the extracted results array
+      setReportData({
+        results: resultsArray, // Use the extracted array
+        totalScore: parsedData.total_score || 0,
+        assignmentTitle: resultData.assignmentTitle || 'Evaluation Report',
+      });
+    } catch (err) {
+      console.error("Error in fetchAndParseResults:", err);
+      setError(err.message);
+    } finally {
       setLoading(false);
     }
-  }, [studentId]);
+  };
 
-  if (loading) {
+  useEffect(() => {
+    if (resultData) {
+      try {
+        const resultsString = resultData.result?.results;
+        console.log("Results string:", resultsString);
+
+        if (!resultsString) {
+          throw new Error('No results data found.');
+        }
+
+        fetchAndParseResults(resultsString);
+      } catch (err) {
+        setError('Failed to parse results data.');
+        setLoading(false);
+      }
+    } else if (resultError) {
+      setError(resultError.message);
+      setLoading(false);
+    }
+  }, [resultData, resultError]);
+
+  if (loading || resultLoading) {
     return (
       <div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-lg">
         <h1 className="text-center text-3xl font-bold text-gray-800">Loading...</h1>
@@ -107,7 +117,7 @@ const {userInfo} = useSelector(state=>state.user)
   // Calculate derived values
   const maxMarks = results.length * 10;
   const percentage =
-    maxMarks > 0 ? ((totalScore / maxMarks) * 100).toFixed(2) : 0;
+    maxMarks > 0 ? ((totalScore / maxMarks) * 100)?.toFixed(2) : 0;
   const grade =
     percentage >= 90
       ? 'A+'
@@ -143,12 +153,10 @@ const {userInfo} = useSelector(state=>state.user)
 
   return (
     <div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-lg">
-      {/* Header Section */}
       <h1 className="mb-8 text-center text-3xl font-bold text-gray-800">
         {assignmentTitle}
       </h1>
 
-      {/* Summary Cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-lg bg-blue-50 p-4">
           <p className="text-sm text-gray-600">Total Score</p>
@@ -172,7 +180,6 @@ const {userInfo} = useSelector(state=>state.user)
         </div>
       </div>
 
-      {/* Charts Section */}
       <div className="mb-8 grid gap-6 md:grid-cols-2">
         <div className="rounded-lg bg-gray-50 p-4 shadow">
           <h3 className="mb-4 text-lg font-semibold">Question-wise Scores</h3>
@@ -199,7 +206,6 @@ const {userInfo} = useSelector(state=>state.user)
         </div>
       </div>
 
-      {/* Detailed Answers Section */}
       <div className="rounded-lg bg-gray-50 p-4 shadow">
         <h3 className="mb-4 text-lg font-semibold">Detailed Analysis</h3>
         <div
@@ -221,7 +227,7 @@ const {userInfo} = useSelector(state=>state.user)
                       : 'bg-red-100 text-red-800'
                   }`}
                 >
-                  {result.score.toFixed(1)}/{result.max_score}
+                  {(result.score ?? 0).toFixed(1)}/{(result.max_score ?? 10)}
                 </span>
               </div>
               <div className="space-y-2">
@@ -231,10 +237,10 @@ const {userInfo} = useSelector(state=>state.user)
                   </span>{' '}
                   {result.answer || 'No answer provided'}
                 </p>
-                <p className="text-sm">
+                {/* <p className="text-sm">
                   <span className="font-medium text-green-600">Context:</span>{' '}
                   {result.context?.join(' ') || 'No context available'}
-                </p>
+                </p> */}
               </div>
             </div>
           ))}
@@ -244,4 +250,4 @@ const {userInfo} = useSelector(state=>state.user)
   );
 };
 
-export default Studentreport2;
+export default Studentreport3;

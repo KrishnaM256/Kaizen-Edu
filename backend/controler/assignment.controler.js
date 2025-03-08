@@ -49,6 +49,7 @@ export const submitAnswer = async (req, res) => {
     const { assignmentId, studentId, results, total_score, plagiarismScore } =
       req.body
     const answerFile = req.file?.filename // Use filename instead of fileName
+console.log({results:results})
 
     const submission = {
       studentId: new mongoose.Types.ObjectId(studentId),
@@ -216,3 +217,104 @@ export const getAssignmentsWithSubmissionsByAssignmentId = async (req, res) => {
     })
   }
 }
+
+export const getStudentAssignmentResult = async (req, res) => {
+  try {
+    const { studentId, assignmentId } = req.body;
+
+    // Step 1: Find the assignment by assignmentId
+    const assignment = await Assignment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    // Step 2: Find the submission for the specific student in the assignment
+    const submission = assignment.submissions.find(
+      (sub) => sub.studentId.toString() === studentId
+    );
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found for the student' });
+    }
+
+    // Step 3: Return the result of the submission
+    res.status(200).json({
+      assignmentId: assignment._id,
+      studentId: submission.studentId,
+      result: submission.result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching student assignment result',
+      error: error.message,
+    });
+  }
+};
+
+export const getAssignmentsByStudentId = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    console.log(studentId)
+    // Step 1: Find all assignments where the submissions array contains the studentId
+    const assignments = await Assignment.find({
+      'submissions.studentId': studentId,
+    });
+
+    if (!assignments || assignments.length === 0) {
+      return res.status(404).json({ message: 'No assignments found for the student' });
+    }
+
+    // Step 2: Fetch class details for each assignment and combine the results
+    const assignmentsWithClassDetails = await Promise.all(
+      assignments.map(async (assignment) => {
+        const classDetails = await Class.findById(assignment.classId); // Fetch class details using classId
+        return {
+          ...assignment.toObject(), // Convert Mongoose document to plain object
+          classDetails: classDetails || null, // Include class details
+        };
+      })
+    );
+
+    res.status(200).json(assignmentsWithClassDetails);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching assignments with submissions and class details',
+      error: error.message,
+    });
+  }
+};
+export const getSubmissionResult = async (req, res) => {
+  try {
+    const { assignmentId, studentId } = req.params;
+
+    // Step 1: Find the assignment by assignmentId
+    const assignment = await Assignment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    // Step 2: Find the submission for the specific student in the assignment
+    const submission = assignment.submissions.find(
+      (sub) => sub.studentId.toString() === studentId
+    );
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found for the student' });
+    }
+
+    // Step 3: Return the result of the submission
+    res.status(200).json({
+      assignmentId: assignment._id,
+      studentId: submission.studentId,
+      result: submission.result,
+      assignmentTitle: assignment.title, // Include assignment title for frontend
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching submission result',
+      error: error.message,
+    });
+  }
+};

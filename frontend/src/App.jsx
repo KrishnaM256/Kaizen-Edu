@@ -21,6 +21,8 @@ import Studentreport2 from './pages_rajas/Studentreport2.jsx'
 import HomePage from './pagesPP/VideoCall/VideoMetting.jsx'
 import VideoMeeting from './pagesPP/VideoCall/VideoMetting.jsx'
 import RoomMeet from './pagesPP/VideoCall/RoomMeet.jsx'
+import Studentreport3 from './pages_rajas/Student_report3.jsx'
+import FeedbackPro from './pages_rajas/FeedbackPro.jsx'
 function App() {
   return (
     <BrowserRouter>
@@ -42,10 +44,11 @@ function App() {
           <Route path="/class/:id" element={<ClassPage />} />
           <Route path="/lecture/:id" element={<LecturePage />} />
           <Route path="/temp" element={<temp/>}/>
+          <Route path="/studentreport/:assignmentId" element={<Studentreport2/>}/>
 
           <Route path="/mindmap" element={<Mindmap></Mindmap>} />
-          <Route path="/report" element={<Studentreport2></Studentreport2>} />
-          <Route path="/feedback" element={<FeedbackPage></FeedbackPage>} />
+          <Route path="/report" element={<Studentreport3></Studentreport3>} />
+          <Route path="/feedback" element={<FeedbackPro></FeedbackPro>} />
           <Route
             path="/personalized"
             element={<PersonalizedFeedback></PersonalizedFeedback>}

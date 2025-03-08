@@ -9,6 +9,8 @@ import {
   updateSubmissionResult,
   getAssignmentsWithSubmissions,
   getAssignmentsWithSubmissionsByAssignmentId,
+  getAssignmentsByStudentId,getStudentAssignmentResult,
+  getSubmissionResult
 } from '../controler/assignment.controler.js'
 import upload from '../middlewares/upload.js'
 import multer from 'multer'
@@ -22,6 +24,13 @@ router.post(
   upload.fields([{ name: 'chapterPdf' }, { name: 'assignmentPdf' }]),
   createAssignment
 )
+
+
+
+
+
+
+router.get('/result/:assignmentId/:studentId', getSubmissionResult);
 
 // Get assignments by class ID
 router.get('/class/:classId', getAssignmentsByClass)
@@ -49,6 +58,8 @@ router.post(
 // Get submissions for an assignment
 router.get('/submissions/:assignmentId', getSubmissions)
 
+router.get('/getStudentAssignmentResult', getStudentAssignmentResult)
+
 // Update an assignment (with file uploads)
 router.put(
   '/:assignmentId',
@@ -70,5 +81,10 @@ router.get(
   '/teacher/assignment/:assignmentId',
   getAssignmentsWithSubmissionsByAssignmentId
 )
+
+// get result of assignement using studentid 
+router.get('/:studentId',getAssignmentsByStudentId);
+
+
 
 export default router

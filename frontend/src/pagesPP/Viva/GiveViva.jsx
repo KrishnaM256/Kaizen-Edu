@@ -31,6 +31,8 @@ const Interview = () => {
   const [isVivaEnded, setIsVivaEnded] = useState(false);
   const [reportReady, setReportReady] = useState(false); // New state to track report readiness
   const [report, setReport] = useState(null);
+  const[askQuestion,setAskQuestion]=useState(0);
+  const [questionsAsked, setQuestionsAsked] = useState(0); // Track the number of questions asked
 
   const { vivaId } = useParams();
   const { userInfo } = useSelector((state) => state.user); // Access user role from Redux
@@ -43,8 +45,6 @@ const Interview = () => {
   // Speech synthesis function with audio recording
   const speakText = async (text, rate = 0.95) => {
     try {
-     
-  
       // Make a POST request to the backend API
       const response = await fetch("http://127.0.0.1:5000/generate_speech", {
         method: "POST",
@@ -68,9 +68,6 @@ const Interview = () => {
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
-        setCurrentQuestion(text); // Now safe to access
-        setQuestionload(false);
-        setStarted(true);
         const byteArray = new Uint8Array(byteNumbers);
         const audioBlob = new Blob([byteArray], { type: "audio/mp3" });
   
@@ -81,7 +78,7 @@ const Interview = () => {
         const audio = new Audio(audioUrl);
         audio.play();
   
-        // Optional: Handle audio events (e.g., when playback ends)
+        // Handle audio events (e.g., when playback ends)
         audio.addEventListener("ended", () => {
           setTimer(timeofthinking * 60);
           setMicOn(true);
@@ -89,15 +86,25 @@ const Interview = () => {
           console.log("Audio playback finished.");
           URL.revokeObjectURL(audioUrl); // Clean up the object URL
         });
-      } else {
-        const synth = window.speechSynthesis;
-        synth.cancel(); // Cancel any ongoing speech
-        setCurrentQuestion(text); // Now safe to access
+  
+        // Update state
+        setCurrentQuestion(text);
+        setQuestionload(false);
         setStarted(true);
+      } else {
+        throw new Error("No speech data received from the API");
+      }
+    } catch (error) {
+      console.error("Error with API call or speech synthesis:", error);
+  
+      // Fallback to browser's speech synthesis
+      const synth = window.speechSynthesis;
+      if (synth) {
+        synth.cancel(); // Cancel any ongoing speech
   
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "hi-IN";
-        utterance.rate = rate; // Ensure `rate` is defined (see below)
+        utterance.rate = rate;
   
         utterance.onend = () => {
           setTimer(timeofthinking * 60);
@@ -109,30 +116,17 @@ const Interview = () => {
           console.error("Speech synthesis error:", event);
           setMicOn(false);
         };
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      const synth = window.speechSynthesis;
-      synth.cancel(); // Cancel any ongoing speech
-      setCurrentQuestion(text); // Now safe to access
-      setStarted(true);
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "hi-IN";
-      utterance.rate = rate; // Ensure `rate` is defined (see below)
   
-      utterance.onend = () => {
-        setTimer(timeofthinking * 60);
-        setMicOn(true);
-        startAudioRecording();
-      };
+        synth.speak(utterance);
   
-      utterance.onerror = (event) => {
-        console.error("Speech synthesis error:", event);
+        // Update state
+        setCurrentQuestion(text);
+        setQuestionload(false);
+        setStarted(true);
+      } else {
+        console.error("Speech synthesis is not supported in this browser.");
         setMicOn(false);
-      };
-    }
-    finally{
-      text="";
+      }
     }
   };
 
@@ -235,9 +229,11 @@ const Interview = () => {
   const fetchQuestionSet = async () => {
     try {
       const response = await axios.get(`${API}/viva/getOneViva/${vivaId}`);
+      console.log(response.data)
       setQuestionSet(response.data.questionAnswerSet);
       setRemainingQuestions(response.data.questionAnswerSet); // Initialize remaining questions
       setTimeOfThinking(response.data.timeofthinking);
+      setAskQuestion(response.data.numberOfQuestionsToAsk);
     } catch (error) {
       console.error("Error Fetching viva:", error);
     }
@@ -254,14 +250,16 @@ const Interview = () => {
 
   // Select a random question from remaining questions
   const selectNextQuestion = () => {
-    if (isVivaEnded) {
-      return; // Do not fetch new questions if the viva has ended
-    }
+      if (isVivaEnded || questionsAsked >= askQuestion) {
+        handleAgree(); // End the viva if the limit is reached
+        return;
+      }
 
-    if (remainingQuestions.length === 0) {
-      handleAgree();
-      return;
-    }
+
+  if (remainingQuestions.length === 0) {
+    handleAgree(); // End the viva if no more questions are left
+    return;
+  }
     
     const randomIndex = Math.floor(Math.random() * remainingQuestions.length);
     const selectedQuestion = remainingQuestions[randomIndex];

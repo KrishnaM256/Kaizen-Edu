@@ -1,6 +1,9 @@
 import Class from '../model/class.model.js'
 import User from '../model/user.model.js'
-
+import { ObjectId } from 'mongodb'; // Correctly import ObjectId
+import Viva from '../model/viva.model.js'
+import Assignment from '../model/assignment.model.js';
+import Quiz from '../model/quiz.model.js'
 // Create a new class (Teacher only)
 export const createClass = async (req, res) => {
   try {
@@ -263,3 +266,4 @@ export const getclassbyuserid = async (req, res) => {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };
+

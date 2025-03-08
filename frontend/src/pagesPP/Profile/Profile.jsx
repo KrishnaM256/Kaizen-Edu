@@ -29,12 +29,21 @@ const Profile = () => {
   const [role, setRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const [error, setError] = useState(null); // State to handle errors
-  const { userInfo } = useSelector((state) => state.user);
+  const { userInfo } = useSelector((state) => state.user);  
   const [vivaResults, setVivaResults] = useState([]);
   const [quizResults, setQuizResults] = useState([]);
   const [assignmentResults, setAssignmentResults] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState(''); // State to store selected class ID
-
+  // Update role state when userInfo changes
+  useEffect(() => {
+    console.log("User Info in useEffect:", userInfo);
+    if (userInfo?.role) {
+      setRole(userInfo.role);
+      console.log("Role updated:", userInfo.role);
+    } else {
+      console.log("Role is undefined in userInfo");
+    }
+  }, [userInfo]);
   // Fetch Viva Results
   const fetchVivaResults = async () => {
     try {
@@ -97,10 +106,20 @@ const Profile = () => {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        const response = await axios.get(`${API}/class/getAllClasses/${userId}`);
-        setClasses(response.data.classes);
-        console.log(response.data.classes);
-        setLoading(false);
+        if(role==='student')
+        {
+          const response = await axios.get(`${API}/class/getAllClasses/${userId}`);
+          setClasses(response.data.classes);
+          console.log("classese:",response.data.classes);
+          setLoading(false);
+        }else if(role=='teacher')
+        {
+          const response = await axios.get(`${API}/class/getClassesByTeacherId/${userId}`);
+          setClasses(response.data.classes);
+          console.log("classese:",response.data.classes);
+          setLoading(false);
+        }
+      
       } catch (error) {
         console.error('Error fetching classes:', error);
         setError('Failed to fetch classes. Please try again.');
@@ -156,6 +175,9 @@ const Profile = () => {
         </Typography>
       </Paper>
 
+
+      { role==='student'?
+      <>
       {/* Class Filter Dropdown */}
       <FormControl fullWidth sx={{ mb: 4 }}>
         <InputLabel>Select Class</InputLabel>
@@ -173,7 +195,6 @@ const Profile = () => {
         </Select>
       </FormControl>
 
-      {/* Results Section */}
       <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
         Results
       </Typography>
@@ -271,6 +292,11 @@ const Profile = () => {
           </Card>
         </Grid>
       </Grid>
+      </>:
+      <div>
+        this is result of teacher
+      </div>
+}
     </Box>
   );
 };

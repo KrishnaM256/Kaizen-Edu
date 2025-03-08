@@ -24,6 +24,7 @@ import chatRoutes from './route/chatRoutes.js'
 const Frontend_URL = process.env.Frontend_URL
 import { app, server } from './socket/server.js'
 
+
 connectDB()
 
 app.use(
@@ -47,10 +48,10 @@ app.use('/lecture', lectureRoute)
 app.use('/comment', commentRoute)
 app.use('/assignment', assignmentRoute)
 app.use('/post', postRoute)
+app.use('/meetlink',MeetLink);
 app.use('/quiz', quizRoute)
 app.use('/quizresult', QuizResult)
 app.use('/dashboard', Dashbaord)
-app.use('/meetlink', MeetLink)
 app.use('/mentor', mentoringRoutes)
 app.use('/student', studentRoutes)
 app.use('/timetable', timetableRoute)

@@ -81,6 +81,8 @@ router.get(
   '/teacher/assignment/:assignmentId',
   getAssignmentsWithSubmissionsByAssignmentId
 )
+// get result of assignement using studentid 
+router.get('/:studentId',getAssignmentsByStudentId);
 
 // get result of assignement using studentid 
 router.get('/:studentId',getAssignmentsByStudentId);

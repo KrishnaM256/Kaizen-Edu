@@ -70,10 +70,14 @@ const GiveQuiz = () => {
     let marks = 0;
     quizData?.questionAnswerSet?.forEach((question) => {
       if (selectedAnswers[question._id] === question.correctoption) {
-        marks += 1; // Assign 1 mark for each correct answer
+        marks += quizData.markperquestion; // Add marks for each correct answer
       }
     });
-    return marks;
+
+    // Calculate percentage
+    const totalPossibleMarks = quizData.questionAnswerSet.length * quizData.markperquestion;
+    const percentage = (marks / totalPossibleMarks) * 100;
+    return percentage.toFixed(2); // Return percentage with 2 decimal places
   };
 
   // Handle quiz submission

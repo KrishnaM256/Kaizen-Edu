@@ -9,6 +9,7 @@ import {
   leaveClass,
   joinClass,
   getAllPublicClasses,
+  getclassbyuserid,
 } from '../controler/class.controller.js'
 import { authenticate } from '../middlewares/authMiddleware.js' // Assuming authentication
 
@@ -24,5 +25,6 @@ router.put('/update/:classId', authenticate, updateClass) // Update class (Teach
 router.delete('/delete/:classId', authenticate, deleteClass) // Delete class (Teacher only)
 router.get('/:classId', authenticate, getClassDetails) // Get class details
 router.put('/leave/:classId', authenticate, leaveClass) // Leave class (Student)
+router.get('/getAllClasses/:userid', getclassbyuserid) // Leave class (Student)
 
 export default router

@@ -23,7 +23,7 @@ CORS(app)
 
 # Configure APIs
 EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE3YjgwYzAtNzg5ZS00YmZkLWIwOTUtMWViZGE0YjNjMjY0IiwidHlwZSI6ImFwaV90b2tlbiJ9.X6hlGB842uLh2-CWDGgmt60ucJE6gYF-pS8BS0_lvXs"
-API_KEY = "AIzaSyC1bnVlj3c5Ob56gXWgglUkM7xZI76SKsQ"
+API_KEY = "AIzaSyCRPHBaZTUVv7EsYkBTDZnbOFCsrdmx7zE"
 genai.configure(api_key=API_KEY)
 
 # LMNT API key 
@@ -224,7 +224,7 @@ def upload_file():
         end_date = request.form["end_date"]
 
         # Save and process file
-        file_path = os.path.join("temp.pdf")
+        file_path = os.path.join("temp2.pdf")
         file.save(file_path)
         syllabus_text = extract_text_from_pdf(file_path)
         os.remove(file_path)
@@ -239,9 +239,9 @@ def upload_file():
         """
 
         # Get AI response
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-1.5-pro")
         response = model.generate_content(prompt)
-        # print(response)
+        print(response)
 
         if not response.text:
             return jsonify({"error": "No valid response from AI"}), 500
@@ -250,11 +250,12 @@ def upload_file():
         # Clean response and extract JSON
         # cleaned_response = re.sub(r'json|', '', response.text)
         cleaned_response = re.sub(r"json|", "", cleaned_response).strip()
-        json_match = re.search(r"(\{.\}|\[.\])", cleaned_response, re.DOTALL)
+        # json_match = re.search(r"(\{.\}|\[.\])", cleaned_response, re.DOTALL)
+        json_match = cleaned_response
         print(cleaned_response)
         print(json_match)
-        if not json_match:
-            return jsonify({"error": "No JSON found in AI response"}), 500
+        # if not json_match:
+        #     return jsonify({"error": "No JSON found in AI response"}), 500
 
         # Parse JSON
         schedule = json.loads(json_match.group(1))
@@ -327,6 +328,87 @@ def evaluate_answers():
         return jsonify({"error": f"System error: {str(e)}"}), 500
 
 
+
+@app.route("/timetable", methods=["POST"])
+def generate_timetable():
+    try:
+        # Check if required inputs are provided
+        if "file" not in request.files or "start_date" not in request.form or "end_date" not in request.form:
+            return jsonify({"error": "Missing required inputs: file, start_date, or end_date"}), 400
+
+        # Get the uploaded file and date inputs
+        file = request.files["file"]
+        start_date = request.form["start_date"]
+        end_date = request.form["end_date"]
+
+        # Save the file temporarily
+        file_path = os.path.join("temp_timetable.pdf")
+        file.save(file_path)
+
+        # Extract text from the PDF
+        syllabus_text = extract_text_from_pdf(file_path)
+
+        # Remove the temporary file
+        os.remove(file_path)
+
+        # Generate the prompt for the AI
+        prompt = f"""
+        Generate a structured timetable in JSON format based on the following details:
+        - Start Date: {start_date}
+        - End Date: {end_date}
+        - Syllabus: {syllabus_text}
+
+        The timetable should include the following fields for each entry:
+        - date: The date of the session (format: YYYY-MM-DD)
+        - day: The day of the week (e.g., Monday, Tuesday)
+        - topic: The topic to be covered
+        - hours: The number of hours allocated for the session
+
+        If the syllabus ends before the end date, repeat hard topics from the syllabus. If there are still remaining days, add revision sessions and tests.
+
+        Ensure the output is a valid JSON array. Do not include any comments or invalid JSON syntax.
+        """
+
+        # Get the AI response
+        model = genai.GenerativeModel("gemini-1.5-pro")
+        response = model.generate_content(prompt)
+
+        # Check if the response is valid
+        if not response.text:
+            return jsonify({"error": "No valid response from AI"}), 500
+
+        # Clean the response and extract JSON
+        cleaned_response = response.text.strip()
+
+        # Remove the ```json prefix if it exists
+        if cleaned_response.startswith("```json"):
+            cleaned_response = cleaned_response[len("```json"):].strip()
+        if cleaned_response.endswith("```"):
+            cleaned_response = cleaned_response[:-len("```")].strip()
+
+        # Remove any comments (e.g., // ...) from the response
+        cleaned_response = re.sub(r"//.*", "", cleaned_response)
+
+        # Debugging: Print the cleaned response
+        print("Cleaned Response:", cleaned_response)
+
+        # Parse the JSON response
+        try:
+            timetable = json.loads(cleaned_response)
+        except json.JSONDecodeError as e:
+            # Debugging: Print the exact JSON parsing error
+            print(f"JSON Decode Error: {str(e)}")
+            return jsonify({"error": f"Invalid JSON format in AI response: {str(e)}"}), 500
+
+        # Return the generated timetable
+        return jsonify({"timetable": timetable})
+
+    except Exception as e:
+        # Debugging: Print the full exception traceback
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+    
 @app.route("/upload", methods=["POST"])
 def upload_pdf():
     """API endpoint to upload a PDF and store its embeddings."""
@@ -705,7 +787,7 @@ def generate_speech_api():
 
     result = generate_speech(text)
     if result:
-        print(result);
+        print(result)
         return jsonify({"speech": result})
     else:
         return jsonify({"error": "Failed to generate speech"}), 500

@@ -16,6 +16,7 @@ const DashboardPage = () => {
   const [userid, setUserid] = useState(null);
   const [quizResults, setQuizResults] = useState([]);
   const [vivaResults, setVivaResults] = useState([]);
+  const [assignmentResults, setAssignmentResults] = useState([]);
   const [dueDates, setDueDates] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,15 +29,18 @@ const DashboardPage = () => {
 
     const fetchData = async () => {
       try {
-        const [quizRes, vivaRes, dueDateRes] = await Promise.all([
+        const [quizRes, vivaRes, assignmentRes, dueDateRes] = await Promise.all([
           axios.get(`${API}/quizresult/quizresultbystudentid/${userid}`),
           axios.get(`${API}/vivaresult/getvivaresultbystudentid/${userid}`),
+          axios.get(`${API}/assignment/${userid}`),
           axios.get(`${API}/dashboard/getduedate/${userid}`),
         ]);
 
         setQuizResults(quizRes.data);
         setVivaResults(vivaRes.data);
-        
+        setAssignmentResults(assignmentRes.data);
+        console.log("Assignment Data:", assignmentRes.data);
+
         // Combine all due dates into a single array
         const combinedDueDates = [
           ...(dueDateRes?.data?.assignments || []).map((item) => ({ ...item, type: 'Assignment' })),
@@ -62,28 +66,52 @@ const DashboardPage = () => {
     date: new Date(quiz.dateofquiz).toLocaleDateString(),
     quizScore: quiz.overallMark,
     vivaScore: null,
+    assignmentScore: null,
   }));
 
   const vivaLineData = vivaResults.map((viva) => ({
     date: new Date(viva.dateOfViva).toLocaleDateString(),
     quizScore: null,
     vivaScore: viva.overallMark,
+    assignmentScore: null,
   }));
 
-  // Combine quiz and viva data and sort by date
-  const lineChartData = [...quizLineData, ...vivaLineData].sort(
+  const assignmentLineData = assignmentResults
+    .flatMap((assignment) =>
+      assignment.submissions
+        .filter((submission) => submission.studentId === userid)
+        .map((submission) => ({
+          date: new Date(submission.submittedAt).toLocaleDateString(),
+          quizScore: null,
+          vivaScore: null,
+          assignmentScore: submission.result?.total_score || 0,
+        }))
+    );
+
+  // Combine quiz, viva, and assignment data and sort by date
+  const lineChartData = [...quizLineData, ...vivaLineData, ...assignmentLineData].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
   );
 
-  const quizData = quizResults.map((quiz) => ({ name: quiz.quizid, score: quiz.overallMark }));
-  const vivaData = vivaResults.map((viva) => ({ name: viva.vivaId, score: viva.overallMark }));
+  // Prepare data for the Pie Chart
   const pieData = [
     { name: 'Quizzes', value: quizResults.length },
     { name: 'Vivas', value: vivaResults.length },
+    { name: 'Assignments', value: assignmentResults.length },
   ];
 
-  const totalAttempts = quizResults.length + vivaResults.length;
-  const progress = ((quizResults.length + vivaResults.length) / (totalAttempts || 1)) * 100;
+  // Calculate total attempts
+  const totalAttempts = quizResults.length + vivaResults.length + assignmentResults.length;
+
+  // Filter assignments for the current user
+  const userAssignments = assignmentResults
+    .flatMap((assignment) =>
+      assignment.submissions.filter((submission) => submission.studentId === userid)
+    )
+    .map((submission) => ({
+      title: assignmentResults.find((a) => a.submissions.includes(submission))?.title,
+      score: submission.result?.total_score || 0,
+    }));
 
   if (loading) {
     return (
@@ -95,64 +123,39 @@ const DashboardPage = () => {
 
   return (
     <Box sx={{ p: 4, backgroundColor: '#f5f7fa', minHeight: '100vh' }}>
-      {/* <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976D2', mb: 4 }}>
-        Dashboard
-      </Typography> */}
-
-      {/* Three Horizontal Cards for Vivas, Quizzes, and Assignments */}
+      {/* Circular Progress Cards */}
       <Grid container spacing={4} sx={{ mb: 4 }}>
         {/* Vivas Card */}
         <Grid item xs={12} md={4}>
-          <Card sx={{ borderRadius: 3, boxShadow: 4 }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <RecordVoiceOverIcon sx={{ fontSize: 40, color: '#1976D2' }} />
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    Vivas 
-                  </Typography>
-                  <Typography variant="body1">{vivaResults.length} Vivas</Typography>
-                </Box>
-              </Box>
-              <CircularProgress variant="determinate" value={(vivaResults.length / totalAttempts) * 100} size={60} thickness={5} sx={{ mt: 2 }} />
-            </CardContent>
-          </Card>
+          <CircularProgressCard
+            percent={(vivaResults.length / (totalAttempts || 1)) * 100}
+            color="#1976D2"
+            title="Vivas"
+            value={`${vivaResults.length} Vivas`}
+            icon={<RecordVoiceOverIcon sx={{ fontSize: 40, color: '#1976D2' }} />}
+          />
         </Grid>
 
         {/* Quizzes Card */}
         <Grid item xs={12} md={4}>
-          <Card sx={{ borderRadius: 3, boxShadow: 4 }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <QuizIcon sx={{ fontSize: 40, color: '#00C49F' }} />
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    Quizzes 
-                  </Typography>
-                  <Typography variant="body1">{quizResults.length} Quizzes</Typography>
-                </Box>
-              </Box>
-              <CircularProgress variant="determinate" value={(quizResults.length / totalAttempts) * 100} size={60} thickness={5} sx={{ mt: 2 }} />
-            </CardContent>
-          </Card>
+          <CircularProgressCard
+            percent={(quizResults.length / (totalAttempts || 1)) * 100}
+            color="#00C49F"
+            title="Quizzes"
+            value={`${quizResults.length} Quizzes`}
+            icon={<QuizIcon sx={{ fontSize: 40, color: '#00C49F' }} />}
+          />
         </Grid>
 
         {/* Assignments Card */}
         <Grid item xs={12} md={4}>
-          <Card sx={{ borderRadius: 3, boxShadow: 4 }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <AssignmentIcon sx={{ fontSize: 40, color: '#FF8042' }} />
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    Assignments 
-                  </Typography>
-                  <Typography variant="body1">0 Assignments</Typography>
-                </Box>
-              </Box>
-              <CircularProgress variant="determinate" value={0} size={60} thickness={5} sx={{ mt: 2 }} />
-            </CardContent>
-          </Card>
+          <CircularProgressCard
+            percent={(assignmentResults.length / (totalAttempts || 1)) * 100}
+            color="#FF8042"
+            title="Assignments"
+            value={`${assignmentResults.length} Assignments`}
+            icon={<AssignmentIcon sx={{ fontSize: 40, color: '#FF8042' }} />}
+          />
         </Grid>
       </Grid>
 
@@ -163,7 +166,7 @@ const DashboardPage = () => {
           <Card sx={{ borderRadius: 3, boxShadow: 4, height: '100%' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#1976D2' }}>
-                Quiz & Viva Performance Over Time
+                Quiz, Viva & Assignment Performance Over Time
               </Typography>
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={lineChartData}>
@@ -185,6 +188,14 @@ const DashboardPage = () => {
                     dataKey="vivaScore"
                     name="Viva Scores"
                     stroke="#00C49F"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="assignmentScore"
+                    name="Assignment Scores"
+                    stroke="#FF8042"
                     strokeWidth={2}
                     dot={false}
                   />
@@ -225,12 +236,12 @@ const DashboardPage = () => {
           </Card>
         </Grid>
 
-        {/* Left Side: Viva Performance */}
+        {/* Left Side: Performance Pie Chart */}
         <Grid item xs={12} md={6}>
           <Card sx={{ borderRadius: 3, boxShadow: 4 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#1976D2' }}>
-                Viva Performance
+                Performance Overview
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -272,6 +283,14 @@ const DashboardPage = () => {
                       </Paper>
                     </motion.div>
                   ))}
+                  {userAssignments.slice(0, 3).map((assignment, index) => (
+                    <motion.div key={index} whileHover={{ scale: 1.02 }}>
+                      <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Assignment: {assignment.title}</Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>Score: {assignment.score}</Typography>
+                      </Paper>
+                    </motion.div>
+                  ))}
                 </Stack>
               </Box>
             </CardContent>
@@ -279,6 +298,65 @@ const DashboardPage = () => {
         </Grid>
       </Grid>
     </Box>
+  );
+};
+
+// Circular Progress Card Component
+const CircularProgressCard = ({ percent, color, title, value, icon }) => {
+  const circumference = 50 * 2 * Math.PI;
+  const strokeDashoffset = circumference - (percent / 100) * circumference;
+
+  return (
+    <Paper elevation={3} sx={{ p: 3, borderRadius: 4, display: 'flex', alignItems: 'center', maxWidth: 400 }}>
+      <Box sx={{ position: 'relative', width: 100, height: 100 }}>
+        <svg width="100" height="100" viewBox="0 0 120 120">
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            fill="transparent"
+            stroke="#e0e0e0"
+            strokeWidth="10"
+          />
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            fill="transparent"
+            stroke={color}
+            strokeWidth="10"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            transform="rotate(-90 60 60)"
+          />
+        </svg>
+        <Typography
+          variant="h6"
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: color,
+            fontWeight: 'bold',
+          }}
+        >
+          {Math.round(percent)}%
+        </Typography>
+      </Box>
+      <Box sx={{ ml: 3 }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          {icon}
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
+            {title}
+          </Typography>
+        </Box>
+        <Typography variant="body1" sx={{ color: color, fontWeight: 'bold' }}>
+          {value}
+        </Typography>
+      </Box>
+    </Paper>
   );
 };
 

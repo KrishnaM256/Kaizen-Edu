@@ -1,0 +1,11 @@
+/* Default calendar size */
+.calendar-container {
+    height: 600px; /* Default height */
+    width: 100%;   /* Default width */
+  }
+  
+  /* Increase size for month view */
+  .calendar-container.month-view-large {
+    height: 800px; /* Increased height for month view */
+    width: 1200px; /* Increased width for month view */
+  }

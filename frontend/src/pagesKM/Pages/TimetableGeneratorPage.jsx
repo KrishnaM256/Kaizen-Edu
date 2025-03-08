@@ -112,14 +112,15 @@ const TimetableGeneratorPage = () => {
     formData.append('file', file)
     formData.append('start_date', startDate)
     formData.append('end_date', endDate)
-
+console.log("Helllo")
     try {
       const response = await axios.post(
-        'http://localhost:5000/schedule',
+        'http://localhost:5000/timetable',
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       )
-      setSchedule(response.data.schedule)
+      setSchedule(response.data.timetable)
+      console.log({response:response})
     } catch (error) {
       setNotification({
         open: true,

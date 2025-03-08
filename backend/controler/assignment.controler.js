@@ -1,4 +1,6 @@
 import Assignment from '../model/assignment.model.js'
+import Class from '../model/class.model.js'; // Import the Class model
+
 import mongoose from 'mongoose'
 
 // Create a new assignment
@@ -217,6 +219,8 @@ export const getAssignmentsWithSubmissionsByAssignmentId = async (req, res) => {
     })
   }
 }
+
+
 
 export const getStudentAssignmentResult = async (req, res) => {
   try {

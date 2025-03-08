@@ -18,11 +18,13 @@ import quizRoute from './route/quiz.route.js'
 import QuizResult from './route/quizresult.route.js'
 import Dashbaord from './route/dashboard.route.js'
 import MeetLink from './route/meetlink.route.js'
+import profileroute from './route/profile.route.js'
 import mentoringRoutes from './route/mentoring.route.js'
 import studentRoutes from './route/student.route.js'
 import chatRoutes from './route/chatRoutes.js'
 const Frontend_URL = process.env.Frontend_URL
 import { app, server } from './socket/server.js'
+
 
 
 connectDB()
@@ -48,15 +50,17 @@ app.use('/lecture', lectureRoute)
 app.use('/comment', commentRoute)
 app.use('/assignment', assignmentRoute)
 app.use('/post', postRoute)
+app.use('/quiz',quizRoute)
+app.use('/quizresult',QuizResult);
+app.use('/dashboard',Dashbaord)
 app.use('/meetlink',MeetLink);
-app.use('/quiz', quizRoute)
-app.use('/quizresult', QuizResult)
+app.use('/timetable',timetableRoute);
+app.use('/profile',profileroute)
 app.use('/dashboard', Dashbaord)
 app.use('/mentor', mentoringRoutes)
 app.use('/student', studentRoutes)
 app.use('/timetable', timetableRoute)
 app.use('/chat', chatRoutes)
 
-server.listen(PORT, () => {
-  console.log(`Running on server http://localhost:${PORT}`)
-})
+app.listen(PORT, () => {
+  console.log(`server run on port ${PORT}`)})

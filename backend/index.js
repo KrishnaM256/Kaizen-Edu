@@ -17,16 +17,12 @@ import timetableRoute from './route/timetable.route.js'
 import quizRoute from './route/quiz.route.js'
 import QuizResult from './route/quizresult.route.js'
 import Dashbaord from './route/dashboard.route.js'
-<<<<<<< HEAD
 import MeetLink from './route/meetlink.route.js'
-=======
 import mentoringRoutes from './route/mentoring.route.js'
 import studentRoutes from './route/student.route.js'
 import chatRoutes from './route/chatRoutes.js'
->>>>>>> krishna
 const Frontend_URL = process.env.Frontend_URL
 import { app, server } from './socket/server.js'
-
 
 connectDB()
 
@@ -51,20 +47,14 @@ app.use('/lecture', lectureRoute)
 app.use('/comment', commentRoute)
 app.use('/assignment', assignmentRoute)
 app.use('/post', postRoute)
-<<<<<<< HEAD
-app.use('/quiz',quizRoute)
-app.use('/quizresult',QuizResult);
-app.use('/dashboard',Dashbaord)
-app.use('/meetlink',MeetLink);
-=======
 app.use('/quiz', quizRoute)
 app.use('/quizresult', QuizResult)
 app.use('/dashboard', Dashbaord)
+app.use('/meetlink', MeetLink)
 app.use('/mentor', mentoringRoutes)
 app.use('/student', studentRoutes)
 app.use('/timetable', timetableRoute)
 app.use('/chat', chatRoutes)
->>>>>>> krishna
 
 server.listen(PORT, () => {
   console.log(`Running on server http://localhost:${PORT}`)

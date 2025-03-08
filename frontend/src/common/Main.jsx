@@ -41,8 +41,9 @@ import ClassPage from '../pagesKM/Pages/ClassPage'
 import UsersPage from '../pagesKM/Pages/UsersPage'
 import TimetableGeneratorPage from '../pagesKM/Pages/TimetableGeneratorPage'
 import TimetablePage from '../pagesKM/Pages/TimetablePage'
-import Temp from '../Component/Temp';
-
+import Temp from '../Component/Temp'
+import MentorMenteePage from '../pagesKM/Pages/MentorMenteePage'
+import MentFindPage from './../pagesKM/Pages/MentFindPage'
 const demoTheme = extendTheme({
   colorSchemes: { light: true },
   colorSchemeSelector: 'class',
@@ -67,7 +68,6 @@ function useDemoRouter(initialPath) {
       navigate: (path) => setPathname(String(path)),
     }
   }, [pathname])
-
   return router
 }
 
@@ -133,6 +133,11 @@ export default function Main(props) {
       icon: <HomeIcon />,
     },
     {
+      segment: 'mentor-mentee',
+      title: 'Mentor-Mentee',
+      icon: <SupervisorAccountIcon />,
+    },
+    {
       kind: 'divider',
     },
     {
@@ -152,11 +157,6 @@ export default function Main(props) {
           : [], // Default to an empty array if invalid
     },
     {
-      segment: 'mentor-mentee',
-      title: 'Mentor-Mentee',
-      icon: <SupervisorAccountIcon />,
-    },
-    {
       segment: 'timetable',
       title: 'Timetable Generator',
       icon: <CalendarMonthIcon />,
@@ -165,9 +165,6 @@ export default function Main(props) {
       segment: 'progress-tracking',
       title: 'Progress Tracking',
       icon: <TrendingUpIcon />,
-    },
-    {
-      kind: 'divider',
     },
     {
       kind: 'divider',
@@ -267,6 +264,7 @@ export default function Main(props) {
           {/* {router.pathname == '/progress-tracking' && <Temp />} */}
           {router.pathname == '/students' && <UsersPage />}
           {router.pathname == '/timetable' && <TimetablePage />}
+          {router.pathname == '/mentor-mentee' && <MentFindPage />}
           {router.pathname?.startsWith('/class/') && (
             <ClassPage classId={router.pathname.split('/')[2]} />
           )}

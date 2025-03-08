@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+
 const userScheam = mongoose.Schema(
   {
     name: {

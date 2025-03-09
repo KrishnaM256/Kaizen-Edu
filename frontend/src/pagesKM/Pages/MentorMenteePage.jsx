@@ -21,6 +21,10 @@ import {
   CircularProgress,
   Divider,
   Box,
+  ListItemAvatar,
+  Avatar,
+  Paper,
+  Chip,
   IconButton,
 } from '@mui/material'
 import {
@@ -29,7 +33,7 @@ import {
   Shuffle,
   Person,
   MeetingRoom,
-} from '@mui/icons-material';
+} from '@mui/icons-material'
 import {
   FaPlus,
   FaEdit,
@@ -172,7 +176,7 @@ const MentorMenteePage = ({ classId }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isCreateMentorModalOpen, setIsCreateMentorModalOpen] = useState(false)
   const [isAssignMentorModalOpen, setIsAssignMentorModalOpen] = useState(false)
-  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false)
 
   const [studentData, setStudentData] = useState({
     user: userInfo?._id,
@@ -242,7 +246,7 @@ const MentorMenteePage = ({ classId }) => {
     'Saturday',
     'Sunday',
   ]
-console.log(studentData);
+  console.log(studentData)
   const handleCreateStudent = async () => {
     if (!studentData?.user || !studentData?.academicStatus?.gpa) {
       alert('Please fill all required fields')
@@ -383,7 +387,7 @@ console.log(studentData);
       internships: updatedInternships,
     })
   }
-console.log(studentData.user);
+  console.log(studentData.user)
   const handleInternshipChange = (index, field, value) => {
     const updatedInternships = [...studentData?.internships]
     updatedInternships[index][field] = value
@@ -458,7 +462,7 @@ console.log(studentData.user);
                 Edit Profile
               </Button>
             )}
-            {userInfo.role === 'teacher' && (
+            {userInfo.role === 'teacher' && !mentor && (
               <Button
                 variant="contained"
                 startIcon={<FaChalkboardTeacher />}
@@ -552,8 +556,6 @@ console.log(studentData.user);
                         No mentor assigned yet.
                       </Typography>
                     )}
-
-                    {/* Edit Profile Button */}
                   </>
                 )}
               </CardContent>
@@ -654,13 +656,13 @@ console.log(studentData.user);
                           Skills: {student?.skills?.join(', ')}
                         </Typography>
                         <IconButton
-  onClick={() => {
-    setSelectedStudentId(student._id); // Set the selected student ID
-    setIsCallModalOpen(true); // Open the modal
-  }}
->
-  <VideoCall />
-</IconButton>
+                          onClick={() => {
+                            setSelectedStudentId(student._id) // Set the selected student ID
+                            setIsCallModalOpen(true) // Open the modal
+                          }}
+                        >
+                          <VideoCall />
+                        </IconButton>
                       </CardContent>
                     </Card>
                   </Grid>
@@ -1139,7 +1141,12 @@ console.log(studentData.user);
       >
         <DialogTitle>Assign Mentor</DialogTitle>
         <DialogContent>
-          <Typography variant="h6" gutterBottom>
+          {/* Suggested Mentors Section */}
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontWeight: 'bold', color: 'primary.main' }}
+          >
             Suggested Mentors
           </Typography>
           <List>
@@ -1151,16 +1158,35 @@ console.log(studentData.user);
                   setSelectedMentorId(mentor._id)
                   handleAssignMentor(selectedStudentId, mentor._id)
                 }}
+                sx={{
+                  '&:hover': { backgroundColor: 'action.hover' },
+                  borderRadius: 1,
+                  mb: 1,
+                }}
               >
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: 'primary.main' }}>
+                    {mentor.name.charAt(0).toUpperCase()}
+                  </Avatar>
+                </ListItemAvatar>
                 <ListItemText
                   primary={mentor.name}
-                  secondary={`Matching Score: ${mentor.score}`}
+                  primaryTypographyProps={{ fontWeight: 'medium' }}
+                  secondary={`Matching Score: ${mentor.score.toFixed(2)}`}
+                  secondaryTypographyProps={{ color: 'text.secondary' }}
                 />
               </ListItem>
             ))}
           </List>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* All Mentors Section */}
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontWeight: 'bold', color: 'primary.main' }}
+          >
             All Mentors
           </Typography>
           <List>
@@ -1172,17 +1198,32 @@ console.log(studentData.user);
                   setSelectedMentorId(mentor._id)
                   handleAssignMentor(selectedStudentId, mentor._id)
                 }}
+                sx={{
+                  '&:hover': { backgroundColor: 'action.hover' },
+                  borderRadius: 1,
+                  mb: 1,
+                }}
               >
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                    {mentor.user?.name.charAt(0).toUpperCase()}
+                  </Avatar>
+                </ListItemAvatar>
                 <ListItemText
                   primary={mentor.user?.name}
+                  primaryTypographyProps={{ fontWeight: 'medium' }}
                   secondary={mentor.expertise.join(', ')}
+                  secondaryTypographyProps={{ color: 'text.secondary' }}
                 />
               </ListItem>
             ))}
           </List>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsAssignMentorModalOpen(false)}>
+          <Button
+            onClick={() => setIsAssignMentorModalOpen(false)}
+            sx={{ color: 'text.secondary' }}
+          >
             Cancel
           </Button>
         </DialogActions>

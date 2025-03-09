@@ -10,11 +10,13 @@ import {
   joinClass,
   getAllPublicClasses,
   getclassbyuserid,
+  markCourseCompleted,
 } from '../controler/class.controller.js'
 import { authenticate } from '../middlewares/authMiddleware.js' // Assuming authentication
 
 const router = express.Router()
 
+router.put('/complete/:classId', markCourseCompleted)
 router.post('/create', authenticate, createClass)
 router.post('/getAllClasses', authenticate, getAllClasses)
 router.post('/getAllPublicClasses', authenticate, getAllPublicClasses)

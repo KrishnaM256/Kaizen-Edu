@@ -6,12 +6,8 @@ import {
 } from '../../redux/api/mentoringApiSlice'
 import { useGetStudentByIdQuery } from '../../redux/api/studentProfileApiSlice'
 import {
-  useDeleteMessageMutation,
   useSendMessageMutation,
-  useEditMessageMutation,
   useGetChatMessagesMutation,
-  useGetChatUsersMutation,
-  useGetMostRecentMessageMutation,
 } from '../../redux/api/chatApiSlice'
 
 const ChattingPage = () => {
@@ -24,7 +20,6 @@ const ChattingPage = () => {
   const messagesEndRef = useRef(null)
 
   const [sendMessage] = useSendMessageMutation()
-  const [deleteMessage] = useDeleteMessageMutation()
   const [getChatMessages] = useGetChatMessagesMutation()
 
   useEffect(() => {
@@ -148,7 +143,15 @@ const ChattingPage = () => {
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col bg-white rounded-lg shadow-lg m-6 overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Chat Header */}
+        <div className="bg-blue-500 text-white p-4">
+          <h2 className="text-xl font-semibold">
+            {selectedUser ? selectedUser.name : 'Select a user to chat'}
+          </h2>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
           {Array.isArray(messages) && messages.length > 0 ? (
             messages.map((msg) => (
               <div
@@ -161,7 +164,7 @@ const ChattingPage = () => {
                   className={`max-w-md p-4 rounded-lg ${
                     msg.sender === senderId
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-700'
+                      : 'bg-white text-gray-700 shadow-sm'
                   }`}
                 >
                   {msg.message}
@@ -175,7 +178,9 @@ const ChattingPage = () => {
           )}
           <div ref={messagesEndRef} />
         </div>
-        <div className="border-t border-gray-200 p-4">
+
+        {/* Input Area */}
+        <div className="border-t border-gray-200 p-4 bg-white">
           <div className="flex items-center space-x-4">
             <input
               type="text"

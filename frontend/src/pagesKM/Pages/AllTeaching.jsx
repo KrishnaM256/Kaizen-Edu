@@ -32,7 +32,7 @@ const AllTeaching = ({ navigate }) => {
     isLoading: isUserClassesLoading,
     error: userClassesError,
     refetch: refetchUserClasses,
-  } = useGetAllClassesQuery(userInfo._id)
+  } = useGetAllClassesQuery(userInfo.role != 'admin' && userInfo._id)
 
   // Fetch all public classes that the student has not joined
   const {

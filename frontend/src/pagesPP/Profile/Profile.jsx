@@ -21,11 +21,15 @@ import {
   Paper,
   Chip,
   Container,
+  Button,
 } from '@mui/material'
 import { useGetStudentByIdQuery } from '../../redux/api/studentProfileApiSlice'
 import { useGetMentorByUserIdQuery } from '../../redux/api/mentoringApiSlice'
 import { motion } from 'framer-motion'
 import { styled } from '@mui/system'
+import { useGetClassDetailsQuery } from '../../redux/api/classApiSlice'
+import jsPDF from 'jspdf'
+import logo from '../../assets/logo.png' // Import your platform logo
 
 const API = import.meta.env.VITE_BACKEND_URL
 
@@ -48,7 +52,7 @@ const Profile = () => {
   const [quizResults, setQuizResults] = useState([])
   const [assignmentResults, setAssignmentResults] = useState([])
   const [selectedClassId, setSelectedClassId] = useState('')
-
+  const { data: classData } = useGetClassDetailsQuery(selectedClassId)
   const { data: studentData } = useGetStudentByIdQuery(userInfo?._id)
   const { data: mentorData } = useGetMentorByUserIdQuery(userInfo?._id)
 
@@ -59,7 +63,6 @@ const Profile = () => {
     }
   }, [userInfo])
 
-  
   const fetchVivaResults = async () => {
     try {
       const response = await axios.get(
@@ -151,6 +154,64 @@ const Profile = () => {
     return assignment.submissions.filter(
       (submission) => submission.studentId === userId
     )
+  }
+
+  const handleDownloadCertificate = () => {
+    if (classData?.classData?.classCompleted) {
+      const doc = new jsPDF('landscape')
+
+      // Add border
+      doc.setDrawColor(0)
+      doc.setFillColor(255, 255, 255)
+      doc.rect(10, 10, 280, 190, 'F')
+
+      // Add logo
+      const imgData = logo
+      doc.addImage(imgData, 'PNG', 20, 20, 50, 50)
+
+      // Add platform name
+      doc.setFontSize(28)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(0, 0, 0)
+      doc.text('Kaizen.Edu', 105, 40, { align: 'center' })
+
+      // Add certificate title
+      doc.setFontSize(36)
+      doc.setTextColor(0, 0, 0)
+      doc.text('Certificate of Completion', 150, 80, { align: 'center' })
+
+      // Add decorative line
+      doc.setDrawColor(0)
+      doc.setLineWidth(1)
+      doc.line(50, 90, 250, 90)
+
+      // Add student name
+      doc.setFontSize(28)
+      doc.setTextColor(0, 0, 0)
+      doc.text(`This is to certify that`, 150, 110, { align: 'center' })
+      doc.setFontSize(36)
+      doc.setTextColor(0, 0, 0)
+      doc.text(userInfo.name, 150, 140, { align: 'center' })
+
+      // Add course name
+      doc.setFontSize(24)
+      doc.setTextColor(0, 0, 0)
+      doc.text(`has successfully completed the course`, 150, 160, {
+        align: 'center',
+      })
+      doc.setFontSize(28)
+      doc.setTextColor(0, 0, 0)
+      doc.text(classData.classData.name, 150, 180, { align: 'center' })
+
+      // Add signature
+      doc.setFontSize(18)
+      doc.setTextColor(0, 0, 0)
+
+      // Save the PDF
+      doc.save(`${userInfo.name}_${classData.classData.name}_Certificate.pdf`)
+    } else {
+      alert('Class is not yet completed.')
+    }
   }
 
   if (loading) {
@@ -370,6 +431,17 @@ const Profile = () => {
               ))}
             </Select>
           </FormControl>
+
+          {selectedClassId && classData?.classData?.classCompleted && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleDownloadCertificate}
+              sx={{ mb: 4 }}
+            >
+              Download Certificate
+            </Button>
+          )}
 
           <Typography
             variant="h4"

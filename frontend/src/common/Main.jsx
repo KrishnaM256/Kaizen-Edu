@@ -16,8 +16,11 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import InsightsIcon from '@mui/icons-material/Insights'
 import PersonIcon from '@mui/icons-material/Person'
+import EventAvailableIcon from '@mui/icons-material/EventAvailable'
+import Attendance from './../pagesKM/Pages/Attendance'
 import SchoolIcon from '@mui/icons-material/School'
-import ProfileIcon from '@mui/icons-material/AccountCircleRounded';import LockIcon from '@mui/icons-material/Lock'
+import ProfileIcon from '@mui/icons-material/AccountCircleRounded'
+import LockIcon from '@mui/icons-material/Lock'
 import PaletteIcon from '@mui/icons-material/Palette'
 import { AppProvider } from '@toolpad/core/AppProvider'
 import { DashboardLayout } from '@toolpad/core/DashboardLayout'
@@ -117,7 +120,9 @@ function CustomAppTitle() {
 
 export default function Main(props) {
   const { userInfo } = useSelector((state) => state.user)
-  const { data, isLoading, error } = useGetAllClassesQuery(userInfo._id)
+  const { data, isLoading, error } = useGetAllClassesQuery(
+    userInfo.role != 'admin' && userInfo._id
+  )
 
   const NAVIGATION = [
     {
@@ -163,16 +168,26 @@ export default function Main(props) {
             }))
           : [], // Default to an empty array if invalid
     },
-    {
-      segment: 'timetable',
-      title: 'Timetable Generator',
-      icon: <CalendarMonthIcon />,
-    },
-    {
-      segment: 'progress-tracking',
-      title: 'Progress Tracking',
-      icon: <TrendingUpIcon />,
-    },
+    ...(userInfo.role != 'admin'
+      ? [
+          {
+            segment: 'timetable',
+            title: 'Timetable Generator',
+            icon: <CalendarMonthIcon />,
+          },
+        ]
+      : []),
+
+    ...(userInfo.role === 'teacher' || userInfo.role === 'admin'
+      ? [
+          {
+            segment: 'attendance',
+            title: 'Attendance',
+            icon: <EventAvailableIcon />,
+            key: 'attendance', // Add a unique key
+          },
+        ]
+      : []),
     {
       kind: 'divider',
     },
@@ -201,11 +216,6 @@ export default function Main(props) {
       segment: 'security',
       title: 'Security & Privacy',
       icon: <LockIcon />,
-    },
-    {
-      segment: 'theme',
-      title: 'Theme & UI',
-      icon: <PaletteIcon />,
     },
   ]
 
@@ -261,15 +271,15 @@ export default function Main(props) {
           }}
         >
           {router.pathname == '/dashboard' && <DashboardPage />}
-          {router.pathname=='/calender' && <Calender/>}
-          {router.pathname=='/profile' && <Profile/>}
+          {router.pathname == '/calender' && <Calender />}
+          {router.pathname == '/profile' && <Profile />}
           {router.pathname == '/class' && (
             <AllTeaching useDemoRouter={useDemoRouter} />
           )}
           {router.pathname == '/createClass' && <CreateClass />}
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}
-          {router.pathname == '/attendance' && <AllTeaching />}
+          {router.pathname == '/attendance' && <Attendance />}
           {/* {router.pathname == '/progress-tracking' && <Temp />} */}
           {router.pathname == '/students' && <UsersPage />}
           {router.pathname == '/timetable' && <TimetablePage />}

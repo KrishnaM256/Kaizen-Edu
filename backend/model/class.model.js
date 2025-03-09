@@ -13,6 +13,7 @@ const classSchema = mongoose.Schema(
     classCode: { type: String }, // Unique class code
     isPublic: { type: Boolean, default: false }, // Public or private class
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    classCompleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 )

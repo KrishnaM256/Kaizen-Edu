@@ -111,7 +111,7 @@ const assignmentApiSlice = apiSlice.injectEndpoints({
         credentials: 'include',
       }),
     }),
- getStudentAssignmentResult: builder.query({
+    getStudentAssignmentResult: builder.query({
       query: ({ studentId, assignmentId }) => ({
         url: `${ASSIGNMENT_URL}/getStudentAssignmentResult`,
         method: 'POST',
@@ -148,5 +148,5 @@ export const {
   useGetAssignmentsWithSubmissionsQuery,
   useGetSubmissionResultQuery,
   useGetAssignmentsWithSubmissionsByAssignmentIdQuery,
-  useGetStudentAssignmentResultQuery
+  useGetStudentAssignmentResultQuery,
 } = assignmentApiSlice

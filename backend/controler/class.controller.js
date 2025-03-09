@@ -1,8 +1,8 @@
 import Class from '../model/class.model.js'
 import User from '../model/user.model.js'
-import { ObjectId } from 'mongodb'; // Correctly import ObjectId
+import { ObjectId } from 'mongodb' // Correctly import ObjectId
 import Viva from '../model/viva.model.js'
-import Assignment from '../model/assignment.model.js';
+import Assignment from '../model/assignment.model.js'
 import Quiz from '../model/quiz.model.js'
 // Create a new class (Teacher only)
 export const createClass = async (req, res) => {
@@ -241,29 +241,54 @@ export const getAllPublicClasses = async (req, res) => {
   }
 }
 
-
-
 export const getclassbyuserid = async (req, res) => {
   try {
-    const { userid } = req.params;
+    const { userid } = req.params
 
     // Find all classes where the student is in the 'students' array
-    const classes = await Class.find({ students: userid }).select('_id name');
+    const classes = await Class.find({ students: userid }).select('_id name')
 
     if (!classes || classes.length === 0) {
-      return res.status(404).json({ message: 'No classes found for this student' });
+      return res
+        .status(404)
+        .json({ message: 'No classes found for this student' })
     }
 
     // Format the response to include class ID and class name
-    const formattedClasses = classes.map(cls => ({
+    const formattedClasses = classes.map((cls) => ({
       classid: cls._id,
       classname: cls.name,
-    }));
+    }))
 
-    res.status(200).json({ classes: formattedClasses });
+    res.status(200).json({ classes: formattedClasses })
   } catch (error) {
-    console.error('Error fetching classes by user ID:', error);
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.error('Error fetching classes by user ID:', error)
+    res.status(500).json({ message: 'Server Error', error: error.message })
   }
-};
+}
+export const markCourseCompleted = async (req, res) => {
+  try {
+    const { classId } = req.params
 
+    // Find the class by ID
+    const currentClass = await Class.findById(classId)
+
+    if (!currentClass) {
+      return res.status(404).json({ message: 'Class not found' })
+    }
+
+    // Toggle the classCompleted field
+    const updatedClass = await Class.findByIdAndUpdate(
+      classId,
+      { classCompleted: !currentClass.classCompleted }, // Toggle the value
+      { new: true } // Return the updated document
+    )
+
+    res.status(200).json({
+      message: 'Class completion status toggled successfully',
+      class: updatedClass,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+}

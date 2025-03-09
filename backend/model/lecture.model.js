@@ -28,6 +28,12 @@ const lectureSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  studentsAttended: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
 })
 
 const Lecture = mongoose.model('Lecture', lectureSchema)

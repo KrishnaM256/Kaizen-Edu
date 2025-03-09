@@ -5,6 +5,7 @@ import Tab from '@mui/material/Tab'
 import Box from '@mui/material/Box'
 import MentorMenteePage from './MentorMenteePage'
 import ChattingPage from './ChattingPage'
+import { useSelector } from 'react-redux'
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props
@@ -37,7 +38,7 @@ function a11yProps(index) {
 
 export default function TimetablePage() {
   const [value, setValue] = React.useState(0)
-
+  const { userInfo } = useSelector((state) => state.user)
   const handleChange = (event, newValue) => {
     setValue(newValue)
   }
@@ -51,8 +52,12 @@ export default function TimetablePage() {
           aria-label="basic tabs example"
         >
           <Tab label="Profiles" {...a11yProps(0)} />
-          <Tab label="Chatting" {...a11yProps(1)} />
-          <Tab label="Meeting" {...a11yProps(2)} />
+          {userInfo.role != 'admin' && (
+            <Tab label="Chatting" {...a11yProps(1)} />
+          )}
+          {userInfo.role != 'admin' && (
+            <Tab label="Meeting" {...a11yProps(2)} />
+          )}
         </Tabs>
       </Box>
       <CustomTabPanel value={value} index={0}>

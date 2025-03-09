@@ -21,6 +21,10 @@ import {
   CircularProgress,
   Divider,
   Box,
+  ListItemAvatar,
+  Avatar,
+  Paper,
+  Chip,
 } from '@mui/material'
 import {
   FaPlus,
@@ -448,7 +452,7 @@ const MentorMenteePage = ({ classId }) => {
                 Edit Profile
               </Button>
             )}
-            {userInfo.role === 'teacher' && (
+            {userInfo.role === 'teacher' && !mentor && (
               <Button
                 variant="contained"
                 startIcon={<FaChalkboardTeacher />}
@@ -542,8 +546,6 @@ const MentorMenteePage = ({ classId }) => {
                         No mentor assigned yet.
                       </Typography>
                     )}
-
-                    {/* Edit Profile Button */}
                   </>
                 )}
               </CardContent>
@@ -1121,7 +1123,12 @@ const MentorMenteePage = ({ classId }) => {
       >
         <DialogTitle>Assign Mentor</DialogTitle>
         <DialogContent>
-          <Typography variant="h6" gutterBottom>
+          {/* Suggested Mentors Section */}
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontWeight: 'bold', color: 'primary.main' }}
+          >
             Suggested Mentors
           </Typography>
           <List>
@@ -1133,16 +1140,35 @@ const MentorMenteePage = ({ classId }) => {
                   setSelectedMentorId(mentor._id)
                   handleAssignMentor(selectedStudentId, mentor._id)
                 }}
+                sx={{
+                  '&:hover': { backgroundColor: 'action.hover' },
+                  borderRadius: 1,
+                  mb: 1,
+                }}
               >
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: 'primary.main' }}>
+                    {mentor.name.charAt(0).toUpperCase()}
+                  </Avatar>
+                </ListItemAvatar>
                 <ListItemText
                   primary={mentor.name}
-                  secondary={`Matching Score: ${mentor.score}`}
+                  primaryTypographyProps={{ fontWeight: 'medium' }}
+                  secondary={`Matching Score: ${mentor.score.toFixed(2)}`}
+                  secondaryTypographyProps={{ color: 'text.secondary' }}
                 />
               </ListItem>
             ))}
           </List>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* All Mentors Section */}
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontWeight: 'bold', color: 'primary.main' }}
+          >
             All Mentors
           </Typography>
           <List>
@@ -1154,17 +1180,32 @@ const MentorMenteePage = ({ classId }) => {
                   setSelectedMentorId(mentor._id)
                   handleAssignMentor(selectedStudentId, mentor._id)
                 }}
+                sx={{
+                  '&:hover': { backgroundColor: 'action.hover' },
+                  borderRadius: 1,
+                  mb: 1,
+                }}
               >
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                    {mentor.user?.name.charAt(0).toUpperCase()}
+                  </Avatar>
+                </ListItemAvatar>
                 <ListItemText
                   primary={mentor.user?.name}
+                  primaryTypographyProps={{ fontWeight: 'medium' }}
                   secondary={mentor.expertise.join(', ')}
+                  secondaryTypographyProps={{ color: 'text.secondary' }}
                 />
               </ListItem>
             ))}
           </List>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsAssignMentorModalOpen(false)}>
+          <Button
+            onClick={() => setIsAssignMentorModalOpen(false)}
+            sx={{ color: 'text.secondary' }}
+          >
             Cancel
           </Button>
         </DialogActions>

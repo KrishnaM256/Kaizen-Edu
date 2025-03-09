@@ -90,36 +90,34 @@ const LecturePage = () => {
 
   useEffect(() => {
     const fetchTranscript = async () => {
-      if (youtubeLink) {
-        try {
-          const url = `https://api.supadata.ai/v1/youtube/transcript?url=${youtubeLink}&text=true`
-          const response = await axios.get(url, {
-            headers: {
-              'x-api-key': API,
-            },
-          })
-          if (response && response?.data?.content) {
-            setTranscript(response.data.content)
-            console.log(response)
-            // Fetch summary using the optimized prompt
-            const prompt = `Summarize the following video lecture transcript in 150 words or less, focusing on key points and main ideas: ${response.data.content}`
-            const url2 = `${PYTHON_URL}/ask_gemini?prompt=${encodeURIComponent(
-              prompt
-            )}&api_key=AIzaSyA9MjZo6sIOlCQPQo5ojKBdHnGmUjlcsGc`
+      if (!youtubeLink) return
 
-            const response2 = await axios.get(url2)
-            console.log(response2)
+      try {
+        const url = `http://127.0.0.1:5000/get_transcript?url=${encodeURIComponent(youtubeLink)}`
+        console.log('url ' + url)
+        const response = await axios.get(url)
+        console.log('response transcript ' + response.data.transcript)
+
+        if (response?.data?.transcript) {
+          setTranscript(response.data.transcript)
+
+          // Fetch summary using the optimized prompt
+          const prompt = `Summarize the following video lecture transcript in 150 words or less, focusing on key points and main ideas: ${response.data.transcript}`
+          const url2 = `${PYTHON_URL}/ask_gemini_summary?prompt=${encodeURIComponent(prompt)}`
+
+          const response2 = await axios.get(url2)
+          if (response2?.data?.response) {
             setSummary(response2.data.response) // Assuming the response contains the summary
           }
-        } catch (error) {
-          console.error('Error fetching transcript or summary:', error)
-          showNotification('Failed to fetch transcript or summary', 'error')
         }
+      } catch (error) {
+        console.error('Error fetching transcript or summary:', error)
+        showNotification('Failed to fetch transcript or summary', 'error')
       }
     }
 
     fetchTranscript()
-  }, [youtubeLink])
+  }, [youtubeLink]) // Make sure youtubeLink is defined
 
   const handleCommentSubmit = async () => {
     if (commentText.trim()) {
@@ -144,7 +142,7 @@ const LecturePage = () => {
         const prompt = `You are an AI assistant helping a student understand a lecture. The lecture transcript is: ${transcript}. The student has asked: "${message}". Provide a detailed and accurate response based on the transcript. If the question is unrelated to the lecture, politely guide the student to ask relevant questions.`
         const url = `${PYTHON_URL}/ask_gemini?prompt=${encodeURIComponent(
           prompt
-        )}&api_key=AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0`
+        )}&api_key=AIzaSyCC1axUEMfMCSps50KEz64RPgVHV242Jaw`
         const response = await axios.get(url)
         setChats([
           ...chats,

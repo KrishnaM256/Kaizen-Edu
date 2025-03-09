@@ -20,6 +20,13 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
+  Card,
+  CardContent,
+  CardHeader,
+  Avatar,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
@@ -30,8 +37,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import CreateViva from './CreateViva'
 import { useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router'
-import { jsPDF } from 'jspdf' // For PDF generation
-import 'jspdf-autotable' // For table support in PDF
+import { jsPDF } from 'jspdf'
+import 'jspdf-autotable'
 
 const API = import.meta.env.VITE_BACKEND_URL
 
@@ -46,21 +53,22 @@ const AllVivaById = ({ classId }) => {
   const [role, setRole] = useState(null)
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false)
-  const { userInfo } = useSelector((state) => state.user) // Access user role from Redux
+  const { userInfo } = useSelector((state) => state.user)
   const navigate = useNavigate()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   useEffect(() => {
     if (userInfo?.role) {
       setRole(userInfo.role)
-      // console.log("Role updated:", userInfo.role);
     }
   }, [userInfo?.role])
+
   useEffect(() => {
     const fetchAllVivas = async () => {
       try {
         const response = await axios.get(`${API}/viva/getallViva/${classId}`)
         setVivas(response.data)
-        console.log(response.data)
       } catch (error) {
         console.error('Error fetching vivas:', error)
       }
@@ -73,7 +81,6 @@ const AllVivaById = ({ classId }) => {
       const response = await axios.get(
         `${API}/vivaresult/getvivaresult/${vivaId}`
       )
-      console.log(response?.data?.data)
       setStudents((prev) => ({ ...prev, [vivaId]: response?.data }))
     } catch (error) {
       console.error('Error fetching students:', error)
@@ -83,14 +90,11 @@ const AllVivaById = ({ classId }) => {
   const handleRowClick = (index, vivaId) => {
     setOpenRows((prev) => ({ ...prev, [index]: !prev[index] }))
     if (!students[vivaId]) fetchRegisteredStudents(vivaId)
-    console.log(vivaId)
   }
 
   const handleStatusChange = async (vivaId, newStatus) => {
     try {
-      await axios.put(`${API}/viva/updateViva/${vivaId}`, {
-        status: newStatus,
-      })
+      await axios.put(`${API}/viva/updateViva/${vivaId}`, { status: newStatus })
       setVivas((prev) =>
         prev.map((viva) =>
           viva._id === vivaId ? { ...viva, status: newStatus } : viva
@@ -121,17 +125,17 @@ const AllVivaById = ({ classId }) => {
   const handleCancel = () => {
     setEditMode(null)
   }
+
   const handleStartViva = (vivaId) => {
     navigate(`/takepicture/${vivaId}`)
   }
 
   const StudentDetailsModal = ({ student, open, onClose }) => {
     if (!student) return null
-    // Function to download PDF
+
     const downloadPDF = () => {
       const doc = new jsPDF()
 
-      // Add student details
       doc.setFontSize(16)
       doc.text('Student Details', 10, 10)
       doc.setFontSize(12)
@@ -150,7 +154,6 @@ const AllVivaById = ({ classId }) => {
       )
       doc.text(`Overall Mark: ${student.overallMark}`, 10, 70)
 
-      // Add proctored feedback
       doc.setFontSize(16)
       doc.text('Proctored Feedback', 10, 90)
       doc.setFontSize(12)
@@ -180,7 +183,6 @@ const AllVivaById = ({ classId }) => {
         140
       )
 
-      // Add question details table
       doc.setFontSize(16)
       doc.text('Question Details', 10, 160)
 
@@ -197,14 +199,37 @@ const AllVivaById = ({ classId }) => {
         body: tableData,
       })
 
-      // Save the PDF
       doc.save(`student_report_${student.studentName}.pdf`)
+    }
+
+    const formatEvaluation = (evaluation) => {
+      if (!evaluation) return null
+
+      const sections = evaluation
+        .split('*')
+        .filter((section) => section.trim() !== '')
+
+      return sections.map((section, index) => {
+        const lines = section.split('\n').filter((line) => line.trim() !== '')
+        const title = lines[0].trim()
+        const content = lines.slice(1).join('\n').trim()
+
+        return (
+          <Box key={index} sx={{ mb: 2 }}>
+            <Typography variant="b0dy2" sx={{}}>
+              {title}
+            </Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+              {content}
+            </Typography>
+          </Box>
+        )
+      })
     }
 
     return (
       <Modal open={open} onClose={onClose}>
         <Box sx={modalStyle}>
-          {/* Student Details Section */}
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
             Student Details
           </Typography>
@@ -229,7 +254,6 @@ const AllVivaById = ({ classId }) => {
             <strong>Overall Mark:</strong> {student.overallMark}
           </Typography>
 
-          {/* Proctored Feedback Section */}
           <Typography
             variant="h6"
             gutterBottom
@@ -260,48 +284,42 @@ const AllVivaById = ({ classId }) => {
             </Typography>
           </Box>
 
-      {/* Question Details Table */}
-      <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-        Question Details
-      </Typography>
-      <TableContainer component={Paper} sx={{ mb: 3 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <strong>Question</strong>
-              </TableCell>
-              <TableCell>
-                <strong>Model Answer</strong>
-              </TableCell>
-              <TableCell>
-                <strong>Student Answer</strong>
-              </TableCell>
-              <TableCell>
-                <strong>Evaluation</strong>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {student.questionAnswerSet.map((question, index) => (
-              <TableRow key={question._id}>
-                <TableCell>{question.questionText}</TableCell>
-                <TableCell>{question.modelAnswer}</TableCell>
-                <TableCell>{question.studentAnswer}</TableCell>
-                <TableCell>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2">
-                      <strong>Relevance:</strong> {console.log(question?.evaluation)}{question.evaluation }
-                    </Typography>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+            Question Details
+          </Typography>
+          <TableContainer component={Paper} sx={{ mb: 3 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <strong>Question</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Model Answer</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Student Answer</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Evaluation</strong>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {student.questionAnswerSet.map((question, index) => (
+                  <TableRow key={question._id}>
+                    <TableCell>{question.questionText}</TableCell>
+                    <TableCell>{question.modelAnswer}</TableCell>
+                    <TableCell>{question.studentAnswer}</TableCell>
+                    <TableCell>
+                      {formatEvaluation(question.evaluation)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-          {/* Buttons Section */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button variant="contained" color="primary" onClick={downloadPDF}>
               Download PDF
@@ -317,285 +335,308 @@ const AllVivaById = ({ classId }) => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Top Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-        }}
-      >
-        <Typography variant="h5" fontWeight="bold">
-          All Vivas
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="Active">Active</MenuItem>
-            <MenuItem value="Inactive">Inactive</MenuItem>
-          </Select>
-          {role === 'teacher' && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setIsModalOpen(true)}
-            >
-              Create Viva
-            </Button>
-          )}
-        </Box>
-      </Box>
-
-      {/* Viva Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {role !== 'student' && <TableCell />}
-              <TableCell>Viva Name</TableCell>
-              <TableCell>Questions</TableCell>
-              <TableCell>Thinking Time (min)</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Status</TableCell>
-              {role === 'student' ? (
-                <TableCell>start Viva</TableCell>
-              ) : (
-                <TableCell>Actions</TableCell>
+      <Card sx={{ mb: 3, boxShadow: 3, borderRadius: 2 }}>
+        <CardHeader
+          title="All Vivas"
+          titleTypographyProps={{ variant: 'h4', fontWeight: 'bold' }}
+          action={
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                size="small"
+                sx={{ minWidth: 120 }}
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="Active">Active</MenuItem>
+                <MenuItem value="Inactive">Inactive</MenuItem>
+              </Select>
+              {role === 'teacher' && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setIsModalOpen(true)}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                  }}
+                >
+                  Create Viva
+                </Button>
               )}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {vivas
-              .filter(
-                (viva) => statusFilter === 'all' || viva.status === statusFilter
-              )
-              .map((viva, index) => (
-                <React.Fragment key={viva._id}>
-                  <TableRow>
-                    {role !== 'student' && (
-                      <TableCell>
-                        <IconButton
-                          onClick={() => handleRowClick(index, viva._id)}
-                        >
-                          {openRows[index] ? (
-                            <KeyboardArrowUpIcon />
-                          ) : (
-                            <KeyboardArrowDownIcon />
-                          )}
-                        </IconButton>
-                      </TableCell>
-                    )}
-
-                    <TableCell>
-                      {editMode === viva._id ? (
-                        <TextField
-                          size="small"
-                          value={editedData.vivaname}
-                          onChange={(e) =>
-                            setEditedData({
-                              ...editedData,
-                              vivaname: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        viva.vivaname
-                      )}
-                    </TableCell>
-
-                    <TableCell>{viva.questionAnswerSet.length}</TableCell>
-
-                    <TableCell>
-                      {editMode === viva._id ? (
-                        <TextField
-                          size="small"
-                          type="number"
-                          value={editedData.timeofthinking}
-                          onChange={(e) =>
-                            setEditedData({
-                              ...editedData,
-                              timeofthinking: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        viva.timeofthinking
-                      )}
-                    </TableCell>
-
-                    <TableCell>
-                      {editMode === viva._id ? (
-                        <TextField
-                          size="small"
-                          type="date"
-                          value={editedData.updatedAt.split('T')[0]}
-                          onChange={(e) =>
-                            setEditedData({
-                              ...editedData,
-                              updatedAt: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        new Date(viva.updatedAt).toLocaleDateString()
-                      )}
-                    </TableCell>
-
-                    <TableCell>
-                      <RadioGroup row>
-                        <FormControlLabel
-                          control={
-                            <Radio
-                              checked={viva.status !== 'true'}
-                              onChange={() =>
-                                handleStatusChange(viva._id, 'Active')
-                              }
-                              disabled={role === 'student'}
-                            />
-                          }
-                          label="Active"
-                        />
-                        <FormControlLabel
-                          control={
-                            <Radio
-                              checked={viva.status === 'true'}
-                              onChange={() =>
-                                handleStatusChange(viva._id, 'Inactive')
-                              }
-                              disabled={role === 'student'}
-                            />
-                          }
-                          label="Inactive"
-                        />
-                      </RadioGroup>
-                    </TableCell>
-                    {role === 'student' ? (
-                      <TableCell>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => handleStartViva(viva._id)}
-                        >
-                          Start Viva
-                        </Button>
-                      </TableCell>
-                    ) : (
-                      <TableCell>
-                        {editMode === viva._id ? (
-                          <>
-                            <IconButton onClick={() => handleSave(viva._id)}>
-                              <SaveIcon />
-                            </IconButton>
-                            <IconButton onClick={handleCancel}>
-                              <CloseIcon />
-                            </IconButton>
-                          </>
-                        ) : (
-                          <IconButton onClick={() => handleEdit(viva)}>
-                            <EditIcon />
-                          </IconButton>
-                        )}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                  {role !== 'student' && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        sx={{ paddingBottom: 0, paddingTop: 0 }}
-                      >
-                        <Collapse
-                          in={openRows[index]}
-                          timeout="auto"
-                          unmountOnExit
-                        >
-                          <Box sx={{ margin: 1 }}>
-                            <Typography
-                              variant="h6"
-                              gutterBottom
-                              component="div"
-                            >
-                              Registered Students:{' '}
-                              {students[viva._id]
-                                ? students[viva._id].data.length
-                                : 0}
-                            </Typography>
-
-                            {students[viva._id] ? (
-                              <Table size="small">
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell>Name</TableCell>
-                                    <TableCell>Total Question</TableCell>
-                                    <TableCell>
-                                      Total question atempted
-                                    </TableCell>
-                                    <TableCell>Date/time</TableCell>
-                                    <TableCell>Score</TableCell>
-                                    <TableCell>Details</TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {Array.isArray(students[viva._id]?.data) ? (
-                                    students[viva._id].data.map((student) => (
-                                      <TableRow key={student._id}>
-                                        <TableCell>
-                                          {student.studentName}
-                                        </TableCell>
-                                        <TableCell>
-                                          {student.totalQuestions}
-                                        </TableCell>
-                                        <TableCell>
-                                          {student.questionAnswerSet.length}
-                                        </TableCell>
-                                        <TableCell>
-                                          {new Date(
-                                            student.dateOfViva
-                                          ).toLocaleString()}
-                                        </TableCell>
-                                        <TableCell>
-                                          {student.overallMark}
-                                        </TableCell>
-                                        <TableCell>
-                                          <Button
-                                            variant="contained"
-                                            color="primary"
-                                            onClick={() => {
-                                              setSelectedStudent(student)
-                                              setIsStudentModalOpen(true)
-                                            }}
-                                          >
-                                            Details
-                                          </Button>
-                                        </TableCell>
-                                      </TableRow>
-                                    ))
-                                  ) : (
-                                    <Typography>
-                                      No students registered yet.
-                                    </Typography>
-                                  )}
-                                </TableBody>
-                              </Table>
-                            ) : (
-                              <Typography>
-                                No students registered yet.
-                              </Typography>
-                            )}
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
+            </Box>
+          }
+        />
+        <CardContent>
+          <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'primary.main' }}>
+                  {role !== 'student' && <TableCell />}
+                  <TableCell sx={{ color: 'white' }}>Viva Name</TableCell>
+                  <TableCell sx={{ color: 'white' }}>Questions</TableCell>
+                  <TableCell sx={{ color: 'white' }}>
+                    Thinking Time (min)
+                  </TableCell>
+                  <TableCell sx={{ color: 'white' }}>Due Date</TableCell>
+                  <TableCell sx={{ color: 'white' }}>Status</TableCell>
+                  {role === 'student' ? (
+                    <TableCell sx={{ color: 'white' }}>Start Viva</TableCell>
+                  ) : (
+                    <TableCell sx={{ color: 'white' }}>Actions</TableCell>
                   )}
-                </React.Fragment>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {vivas
+                  .filter(
+                    (viva) =>
+                      statusFilter === 'all' || viva.status === statusFilter
+                  )
+                  .map((viva, index) => (
+                    <React.Fragment key={viva._id}>
+                      <TableRow sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                        {role !== 'student' && (
+                          <TableCell>
+                            <IconButton
+                              onClick={() => handleRowClick(index, viva._id)}
+                            >
+                              {openRows[index] ? (
+                                <KeyboardArrowUpIcon />
+                              ) : (
+                                <KeyboardArrowDownIcon />
+                              )}
+                            </IconButton>
+                          </TableCell>
+                        )}
+
+                        <TableCell>
+                          {editMode === viva._id ? (
+                            <TextField
+                              size="small"
+                              value={editedData.vivaname}
+                              onChange={(e) =>
+                                setEditedData({
+                                  ...editedData,
+                                  vivaname: e.target.value,
+                                })
+                              }
+                            />
+                          ) : (
+                            viva.vivaname
+                          )}
+                        </TableCell>
+
+                        <TableCell>{viva.questionAnswerSet.length}</TableCell>
+
+                        <TableCell>
+                          {editMode === viva._id ? (
+                            <TextField
+                              size="small"
+                              type="number"
+                              value={editedData.timeofthinking}
+                              onChange={(e) =>
+                                setEditedData({
+                                  ...editedData,
+                                  timeofthinking: e.target.value,
+                                })
+                              }
+                            />
+                          ) : (
+                            viva.timeofthinking
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          {editMode === viva._id ? (
+                            <TextField
+                              size="small"
+                              type="date"
+                              value={editedData.updatedAt.split('T')[0]}
+                              onChange={(e) =>
+                                setEditedData({
+                                  ...editedData,
+                                  updatedAt: e.target.value,
+                                })
+                              }
+                            />
+                          ) : (
+                            new Date(viva.updatedAt).toLocaleDateString()
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          <RadioGroup row>
+                            <FormControlLabel
+                              control={
+                                <Radio
+                                  checked={viva.status !== 'true'}
+                                  onChange={() =>
+                                    handleStatusChange(viva._id, 'Active')
+                                  }
+                                  disabled={role === 'student'}
+                                />
+                              }
+                              label="Active"
+                            />
+                            <FormControlLabel
+                              control={
+                                <Radio
+                                  checked={viva.status === 'true'}
+                                  onChange={() =>
+                                    handleStatusChange(viva._id, 'Inactive')
+                                  }
+                                  disabled={role === 'student'}
+                                />
+                              }
+                              label="Inactive"
+                            />
+                          </RadioGroup>
+                        </TableCell>
+                        {role === 'student' ? (
+                          <TableCell>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={() => handleStartViva(viva._id)}
+                              sx={{
+                                bgcolor: 'success.main',
+                                '&:hover': { bgcolor: 'success.dark' },
+                              }}
+                            >
+                              Start Viva
+                            </Button>
+                          </TableCell>
+                        ) : (
+                          <TableCell>
+                            {editMode === viva._id ? (
+                              <>
+                                <Tooltip title="Save">
+                                  <IconButton
+                                    onClick={() => handleSave(viva._id)}
+                                  >
+                                    <SaveIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Cancel">
+                                  <IconButton onClick={handleCancel}>
+                                    <CloseIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </>
+                            ) : (
+                              <Tooltip title="Edit">
+                                <IconButton onClick={() => handleEdit(viva)}>
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                      {role !== 'student' && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={6}
+                            sx={{ paddingBottom: 0, paddingTop: 0 }}
+                          >
+                            <Collapse
+                              in={openRows[index]}
+                              timeout="auto"
+                              unmountOnExit
+                            >
+                              <Box sx={{ margin: 1 }}>
+                                <Typography
+                                  variant="h6"
+                                  gutterBottom
+                                  component="div"
+                                >
+                                  Registered Students:{' '}
+                                  {students[viva._id]
+                                    ? students[viva._id].data.length
+                                    : 0}
+                                </Typography>
+
+                                {students[viva._id] ? (
+                                  <Table size="small">
+                                    <TableHead>
+                                      <TableRow>
+                                        <TableCell>Name</TableCell>
+                                        <TableCell>Total Question</TableCell>
+                                        <TableCell>
+                                          Total Question Attempted
+                                        </TableCell>
+                                        <TableCell>Date/Time</TableCell>
+                                        <TableCell>Score</TableCell>
+                                        <TableCell>Details</TableCell>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      {Array.isArray(
+                                        students[viva._id]?.data
+                                      ) ? (
+                                        students[viva._id].data.map(
+                                          (student) => (
+                                            <TableRow key={student._id}>
+                                              <TableCell>
+                                                {student.studentName}
+                                              </TableCell>
+                                              <TableCell>
+                                                {student.totalQuestions}
+                                              </TableCell>
+                                              <TableCell>
+                                                {
+                                                  student.questionAnswerSet
+                                                    .length
+                                                }
+                                              </TableCell>
+                                              <TableCell>
+                                                {new Date(
+                                                  student.dateOfViva
+                                                ).toLocaleString()}
+                                              </TableCell>
+                                              <TableCell>
+                                                {student.overallMark}
+                                              </TableCell>
+                                              <TableCell>
+                                                <Button
+                                                  variant="contained"
+                                                  color="primary"
+                                                  onClick={() => {
+                                                    setSelectedStudent(student)
+                                                    setIsStudentModalOpen(true)
+                                                  }}
+                                                >
+                                                  Details
+                                                </Button>
+                                              </TableCell>
+                                            </TableRow>
+                                          )
+                                        )
+                                      ) : (
+                                        <Typography>
+                                          No students registered yet.
+                                        </Typography>
+                                      )}
+                                    </TableBody>
+                                  </Table>
+                                ) : (
+                                  <Typography>
+                                    No students registered yet.
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <Box sx={modalStyle}>
@@ -612,7 +653,6 @@ const AllVivaById = ({ classId }) => {
   )
 }
 
-// Modal style
 const modalStyle = {
   position: 'absolute',
   top: '50%',

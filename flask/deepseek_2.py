@@ -1031,7 +1031,7 @@ def match():
 
 @app.route("/ask_gemini", methods=["GET"])
 def ask_gemini():
->>>>>>> krishna
+
     """
     Postprocesses the response from Gemini API to ensure it adheres to the Mipmap format.
     """

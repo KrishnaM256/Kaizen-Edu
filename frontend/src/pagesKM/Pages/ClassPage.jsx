@@ -5,6 +5,7 @@ import {
   useUpdateClassMutation,
   useDeleteClassMutation,
   useLeaveClassMutation,
+  useMarkCourseCompletedMutation, // Import the mutation
 } from '../../redux/api/classApiSlice'
 import {
   Box,
@@ -26,18 +27,19 @@ import UploadFileIcon from '@mui/icons-material/UploadFile'
 import {
   useDeleteLectureMutation,
   useGetLecturesByClassQuery,
+  useMarkAttendanceMutation,
   useUploadLectureMutation,
 } from '../../redux/api/lectureApiSlice'
 import { useSelector } from 'react-redux'
 import AssignmentPage from './AssignmentPage'
 import CommunityPage from './communityPage'
-
 import CreateViva from '../../pagesPP/Viva/CreateViva'
 import ShowAllViva from '../../pagesPP/Viva/AllVivaById'
 import TakePicture from '../../pagesPP/Viva/TakePicture'
 import HomeQuiz from '../../pagesPP/Quiz/QuizManagement'
 import VideoMetting from '../../pagesPP/VideoCall/VideoMetting'
 import SelfStudy from './SelfStudy'
+
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props
 
@@ -68,7 +70,12 @@ function a11yProps(index) {
 }
 
 const ClassPage = ({ classId }) => {
-  const { data: classData, isLoading, error } = useGetClassDetailsQuery(classId)
+  const {
+    data: classData,
+    isLoading,
+    error,
+    refetch: classDataRefetch,
+  } = useGetClassDetailsQuery(classId)
   const navigate = useNavigate()
   const [value, setValue] = useState(0)
   const [openModal, setOpenModal] = useState(false)
@@ -79,7 +86,7 @@ const ClassPage = ({ classId }) => {
     youtubeLink: '',
     video: null,
   })
-  console.log(userInfo.role)
+  console.log(classData)
   const [uploadLecture] = useUploadLectureMutation()
   const { data: lectures, refetch } = useGetLecturesByClassQuery(classId)
   const [deleteLecture] = useDeleteLectureMutation()
@@ -89,6 +96,8 @@ const ClassPage = ({ classId }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState('')
   const [snackbarSeverity, setSnackbarSeverity] = useState('success')
+  const [markAttendance] = useMarkAttendanceMutation()
+  const [markCourseCompleted] = useMarkCourseCompletedMutation() // Initialize the mutation
 
   const handleChange = (event, newValue) => {
     setValue(newValue)
@@ -143,6 +152,21 @@ const ClassPage = ({ classId }) => {
     }
   }
 
+  const handleAttendLecture = async (lectureId) => {
+    try {
+      const userId = userInfo._id // Get the userId from the logged-in user
+      await markAttendance({ lectureId, userId }).unwrap() // Call the markAttendance mutation
+      setSnackbarMessage('Attendance marked successfully')
+      setSnackbarSeverity('success')
+      setSnackbarOpen(true)
+    } catch (error) {
+      setSnackbarMessage('Error marking attendance')
+      setSnackbarSeverity('error')
+      setSnackbarOpen(true)
+    }
+    navigate(`/lecture/${lectureId}`) // Navigate to the lecture page
+  }
+
   const handleDeleteClass = async () => {
     try {
       const teacherId = userInfo._id // Get the teacherId from the logged-in user
@@ -172,6 +196,20 @@ const ClassPage = ({ classId }) => {
     }
   }
 
+  const handleMarkCompleted = async () => {
+    try {
+      await markCourseCompleted(classId).unwrap() // Call the mutation
+      setSnackbarMessage('Class marked as completed successfully')
+      setSnackbarSeverity('success')
+      setSnackbarOpen(true)
+      classDataRefetch() // Refetch class data to update the UI
+    } catch (error) {
+      setSnackbarMessage('Error marking class as completed')
+      setSnackbarSeverity('error')
+      setSnackbarOpen(true)
+    }
+  }
+
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false)
   }
@@ -194,7 +232,7 @@ const ClassPage = ({ classId }) => {
             <Tab label="Viva Assignment" {...a11yProps(3)} />
             <Tab label="Community" {...a11yProps(4)} />
             <Tab label="Live meeting " {...a11yProps(5)} />
-            {userInfo?.role == 'student' && (
+            {userInfo?.role === 'student' && (
               <Tab label="Self Study" {...a11yProps(6)} />
             )}
           </Tabs>
@@ -213,6 +251,20 @@ const ClassPage = ({ classId }) => {
             </section>
             {userInfo?.role === 'teacher' && (
               <div className="action-buttons">
+                <Button
+                  variant="contained"
+                  color={
+                    classData.classData.classCompleted ? 'error' : 'success'
+                  }
+                  onClick={() =>
+                    confirm('Are you sure you want to mark class completed?') &&
+                    handleMarkCompleted()
+                  }
+                >
+                  {classData?.classData?.classCompleted
+                    ? 'Revert to Ongoing'
+                    : 'Mark as Completed'}
+                </Button>
                 <Button
                   variant="contained"
                   startIcon={<UploadFileIcon />}
@@ -282,7 +334,7 @@ const ClassPage = ({ classId }) => {
                   <Button
                     size="small"
                     color="primary"
-                    onClick={() => navigate(`/lecture/${lecture._id}`)}
+                    onClick={() => handleAttendLecture(lecture._id)}
                   >
                     Attend Lecture
                   </Button>
@@ -316,13 +368,13 @@ const ClassPage = ({ classId }) => {
           <ShowAllViva classId={classId} />
         </CustomTabPanel>
 
-        {/* community Tab */}
+        {/* Community Tab */}
         <CustomTabPanel value={value} index={4}>
           <Typography>
             <CommunityPage classId={classId} />
           </Typography>
         </CustomTabPanel>
-        {userInfo?.role == 'student' && (
+        {userInfo?.role === 'student' && (
           <CustomTabPanel value={value} index={6}>
             <Typography>
               <SelfStudy />
@@ -331,10 +383,9 @@ const ClassPage = ({ classId }) => {
         )}
         <CustomTabPanel value={value} index={5}>
           <Typography>
-            <VideoMetting classId={classId} role={userInfo.role}/>
+            <VideoMetting classId={classId} role={userInfo.role} />
           </Typography>
         </CustomTabPanel>
-        
       </Box>
 
       {/* Upload Lecture Modal */}

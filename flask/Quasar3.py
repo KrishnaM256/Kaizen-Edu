@@ -4,6 +4,8 @@ from flask_cors import CORS
 from io import BytesIO
 import google.generativeai as genai
 import base64
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api._errors import NoTranscriptFound, TranscriptsDisabled
 import io
 # import fitz
 from pdf2image import convert_from_bytes
@@ -23,7 +25,7 @@ CORS(app)
 
 # Configure APIs
 EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE3YjgwYzAtNzg5ZS00YmZkLWIwOTUtMWViZGE0YjNjMjY0IiwidHlwZSI6ImFwaV90b2tlbiJ9.X6hlGB842uLh2-CWDGgmt60ucJE6gYF-pS8BS0_lvXs"
-API_KEY = "AIzaSyCRPHBaZTUVv7EsYkBTDZnbOFCsrdmx7zE"
+API_KEY = "AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0"
 genai.configure(api_key=API_KEY)
 
 # LMNT API key 
@@ -329,7 +331,8 @@ def evaluate_answers():
 
 
 
-@app.route("/timetable", methods=["POST"])
+
+@app.route("/availability", methods=["POST"])
 def generate_timetable():
     try:
         # Check if required inputs are provided
@@ -408,7 +411,8 @@ def generate_timetable():
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"Server error: {str(e)}"}), 500
-    
+
+
 @app.route("/upload", methods=["POST"])
 def upload_pdf():
     """API endpoint to upload a PDF and store its embeddings."""
@@ -442,6 +446,347 @@ def upload_pdf():
         print(f"Error processing PDF: {e}")  # Debugging log
         return jsonify({"error": str(e)}), 500
 
+
+
+# Function to extract video ID from YouTube link
+def extract_video_id(youtube_link):
+    regex = r"(?:v=|\/)([0-9A-Za-z_-]{11}).*"
+    match = re.search(regex, youtube_link)
+    if match:
+        return match.group(1)
+    return None
+
+# Function to fetch transcript in any available language
+def fetch_transcript(video_id):
+    try:
+        # Get list of available transcripts
+        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+
+        # Try to fetch the transcript in the first available language
+        for transcript in transcript_list:
+            try:
+                text = " ".join([entry['text'] for entry in transcript.fetch()])
+                return text, transcript.language_code
+            except Exception as e:
+                print(f"Error fetching transcript in {transcript.language_code}: {e}")
+                continue
+
+        # If no transcript could be fetched
+        print("No transcript could be fetched for any available language.")
+        return None, None
+
+    except NoTranscriptFound:
+        print("No transcripts are available for this video.")
+        return None, None
+    except TranscriptsDisabled:
+        print("Transcripts are disabled for this video.")
+        return None, None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None, None
+
+
+skill_to_domain = {
+    # Programming Languages
+    "Python": ["Data Science", "Machine Learning", "Web Development", "Automation", "Scripting"],
+    "Java": ["Web Development", "Android Development", "Enterprise Applications"],
+    "C++": ["Game Development", "System Programming", "Embedded Systems"],
+    "JavaScript": ["Web Development", "Frontend Development", "Full Stack Development"],
+    "C": ["System Programming", "Embedded Systems", "Operating Systems"],
+    "C#": ["Game Development", "Windows Applications", "Enterprise Software"],
+    "R": ["Data Science", "Statistical Analysis", "Bioinformatics"],
+    "Swift": ["iOS Development", "Mobile App Development"],
+    "Kotlin": ["Android Development", "Mobile App Development"],
+    "Go": ["Backend Development", "Cloud Computing", "Microservices"],
+    "Ruby": ["Web Development", "Scripting", "Automation"],
+    "PHP": ["Web Development", "Backend Development"],
+    "TypeScript": ["Web Development", "Frontend Development", "Full Stack Development"],
+    "SQL": ["Database Management", "Data Analysis", "Backend Development"],
+    "Bash": ["Scripting", "Automation", "DevOps"],
+
+    # Data Science and Machine Learning
+    "Machine Learning": ["Data Science", "Artificial Intelligence", "Predictive Analytics"],
+    "Deep Learning": ["Artificial Intelligence", "Computer Vision", "Natural Language Processing"],
+    "Data Analysis": ["Data Science", "Business Intelligence", "Statistics"],
+    "Data Visualization": ["Data Science", "Business Intelligence", "Reporting"],
+    "Statistics": ["Data Science", "Machine Learning", "Research"],
+    "Natural Language Processing": ["Artificial Intelligence", "Text Analytics", "Chatbots"],
+    "Computer Vision": ["Artificial Intelligence", "Image Processing", "Robotics"],
+    "Big Data": ["Data Engineering", "Data Science", "Cloud Computing"],
+    "Data Engineering": ["Data Science", "Big Data", "Cloud Computing"],
+    "Predictive Analytics": ["Data Science", "Machine Learning", "Business Intelligence"],
+
+    # Web Development
+    "HTML": ["Web Development", "Frontend Development"],
+    "CSS": ["Web Development", "Frontend Development"],
+    "React": ["Frontend Development", "Web Development"],
+    "Angular": ["Frontend Development", "Web Development"],
+    "Vue.js": ["Frontend Development", "Web Development"],
+    "Node.js": ["Backend Development", "Web Development"],
+    "Django": ["Web Development", "Backend Development"],
+    "Flask": ["Web Development", "Backend Development"],
+    "Spring Boot": ["Web Development", "Backend Development", "Enterprise Applications"],
+    "REST APIs": ["Web Development", "Backend Development", "Microservices"],
+    "GraphQL": ["Web Development", "Backend Development", "API Design"],
+
+    # Mobile Development
+    "Android Development": ["Mobile App Development", "Android"],
+    "iOS Development": ["Mobile App Development", "iOS"],
+    "React Native": ["Mobile App Development", "Cross-Platform Development"],
+    "Flutter": ["Mobile App Development", "Cross-Platform Development"],
+
+    # Cloud and DevOps
+    "AWS": ["Cloud Computing", "DevOps", "Backend Development"],
+    "Azure": ["Cloud Computing", "DevOps", "Backend Development"],
+    "Google Cloud": ["Cloud Computing", "DevOps", "Backend Development"],
+    "Docker": ["DevOps", "Cloud Computing", "Containerization"],
+    "Kubernetes": ["DevOps", "Cloud Computing", "Container Orchestration"],
+    "CI/CD": ["DevOps", "Software Engineering", "Automation"],
+    "Terraform": ["DevOps", "Infrastructure as Code", "Cloud Computing"],
+    "Ansible": ["DevOps", "Automation", "Configuration Management"],
+
+    # Software Engineering
+    "Object-Oriented Programming": ["Software Engineering", "Programming Fundamentals"],
+    "Design Patterns": ["Software Engineering", "System Design"],
+    "System Design": ["Software Engineering", "Backend Development"],
+    "Microservices": ["Software Engineering", "Backend Development", "Cloud Computing"],
+    "Agile Methodology": ["Software Engineering", "Project Management"],
+    "Scrum": ["Software Engineering", "Project Management"],
+    "Version Control (Git)": ["Software Engineering", "Collaboration", "DevOps"],
+    "Testing": ["Software Engineering", "Quality Assurance"],
+    "Debugging": ["Software Engineering", "Problem Solving"],
+
+    # Electrical and Electronics Engineering
+    "Embedded Systems": ["Electrical Engineering", "IoT", "Robotics"],
+    "IoT": ["Electrical Engineering", "Embedded Systems", "Smart Devices"],
+    "Robotics": ["Electrical Engineering", "Mechanical Engineering", "AI"],
+    "Circuit Design": ["Electrical Engineering", "Hardware Design"],
+    "PCB Design": ["Electrical Engineering", "Hardware Design"],
+    "Signal Processing": ["Electrical Engineering", "Telecommunications", "Audio Processing"],
+    "Power Systems": ["Electrical Engineering", "Energy Management"],
+    "Control Systems": ["Electrical Engineering", "Automation", "Robotics"],
+
+    # Mechanical Engineering
+    "CAD": ["Mechanical Engineering", "Product Design"],
+    "Thermodynamics": ["Mechanical Engineering", "Energy Systems"],
+    "Fluid Mechanics": ["Mechanical Engineering", "Aerospace Engineering"],
+    "Structural Analysis": ["Mechanical Engineering", "Civil Engineering"],
+    "Mechatronics": ["Mechanical Engineering", "Robotics", "Automation"],
+    "Manufacturing": ["Mechanical Engineering", "Industrial Engineering"],
+    "Materials Science": ["Mechanical Engineering", "Product Design"],
+
+    # Business and Soft Skills
+    "Project Management": ["Business", "Leadership", "Software Engineering"],
+    "Leadership": ["Business", "Management", "Teamwork"],
+    "Communication": ["Soft Skills", "Business", "Teamwork"],
+    "Public Speaking": ["Soft Skills", "Communication", "Leadership"],
+    "Teamwork": ["Soft Skills", "Collaboration", "Business"],
+    "Time Management": ["Soft Skills", "Productivity", "Business"],
+    "Problem Solving": ["Soft Skills", "Analytical Thinking", "Engineering"],
+    "Critical Thinking": ["Soft Skills", "Analytical Thinking", "Research"],
+    "Negotiation": ["Soft Skills", "Business", "Sales"],
+    "Emotional Intelligence": ["Soft Skills", "Leadership", "Teamwork"],
+
+    # Other Skills
+    "Blockchain": ["Cryptography", "Finance", "Decentralized Systems"],
+    "Cybersecurity": ["Information Security", "Network Security", "Ethical Hacking"],
+    "UI/UX Design": ["Web Development", "Frontend Development", "Product Design"],
+    "Game Development": ["Game Design", "Programming", "3D Modeling"],
+    "3D Modeling": ["Game Development", "Animation", "Product Design"],
+    "AR/VR": ["Game Development", "Simulation", "Training"],
+    "Quantum Computing": ["Computer Science", "Physics", "Research"],
+    "Bioinformatics": ["Biology", "Data Science", "Research"],
+    "Ethical Hacking": ["Cybersecurity", "Information Security", "Network Security"],
+}
+
+def map_skills_to_domains(skills, skill_to_domain):
+    domains = set()
+    for skill in skills:
+        if skill in skill_to_domain:
+            domains.update(skill_to_domain[skill])
+    return domains
+
+# Function to calculate matching score
+def calculate_matching_score(mentee_domains, mentor_domains):
+    overlap = mentee_domains.intersection(mentor_domains)
+    return len(overlap) / len(mentee_domains) if len(mentee_domains) > 0 else 0
+
+# Function to match mentees with mentors
+def match_mentees_with_mentors(mentees, mentors, skill_to_domain):
+    mentee = mentees[0]  # Only one mentee is expected
+    mentee_domains = map_skills_to_domains(mentee["skills"], skill_to_domain)
+
+    matched_mentors = []
+    for mentor in mentors:
+        mentor_domains = set(mentor["domains"])
+        matching_score = calculate_matching_score(mentee_domains, mentor_domains)
+        if matching_score > 0.00:
+            matched_mentors.append({
+                "name": mentor["name"],
+                "score": matching_score
+            })
+
+    # Sort mentors by matching score (highest first)
+    matched_mentors.sort(key=lambda x: x["score"], reverse=True)
+    return matched_mentors
+
+# Flask API endpoint
+@app.route('/match', methods=['POST'])
+def match():
+    data = request.json
+    mentees = data.get("mentees", [])
+    mentors = data.get("mentors", [])
+
+    if not mentees or not mentors:
+        return jsonify({"error": "Both mentees and mentors lists are required"}), 400
+
+    matched_mentors = match_mentees_with_mentors(mentees, mentors, skill_to_domain)
+    return jsonify({"matched_mentors": matched_mentors})
+
+
+@app.route("/ask_gemini_summary", methods=["GET"])
+def ask_gemini_summary():
+    """
+    Sends a prompt to the Gemini API and returns the response.
+
+    Query Parameters:
+    - prompt: The complete formatted prompt including system instructions, source document, and question.
+    - api_key: The API key to authenticate the request.
+
+    Returns:
+    - JSON response containing Gemini's generated text.
+    """
+    prompt = request.args.get("prompt")
+
+
+    if not prompt:
+        return jsonify({"error": "Missing 'prompt"}), 400
+
+    # Configure API
+    genai.configure(api_key=API_KEY)
+
+    # Initialize the model
+    model = genai.GenerativeModel("gemini-1.5-pro")
+
+    # Get response
+    response = model.generate_content(prompt)
+
+    return jsonify({"response":response.text})
+
+
+# API endpoint to fetch transcript
+@app.route('/get_transcript', methods=['GET'])
+def get_transcript():
+    # Get the YouTube URL from the request query parameters
+    youtube_link = request.args.get('url')
+
+    if not youtube_link:
+        return jsonify({"error": "Please provide a YouTube video URL in the 'url' query parameter."}), 400
+
+    # Extract video ID from the URL
+    video_id = extract_video_id(youtube_link)
+
+    if not video_id:
+        return jsonify({"error": "Invalid YouTube link. Please provide a valid link."}), 400
+
+    # Fetch the transcript in any available language
+    transcript, language_code = fetch_transcript(video_id)
+
+    if transcript:
+        return jsonify({
+            "status": "success",
+            "language_code": language_code,
+            "transcript": transcript
+        })
+    else:
+        return jsonify({
+            "status": "error",
+            "message": "Failed to fetch transcript."
+        }), 404
+
+
+
+def structure_syllabus_into_modules(syllabus_text):
+    """Use Gemini to structure the syllabus into modules."""
+    prompt = f"""
+    Structure the following syllabus into modules. Each module should have a title and a list of topics.
+    Return the output as a JSON array where each module has the following keys:
+    - "module_title" (title of the module)
+    - "topics" (list of topics under the module)
+
+    Example:
+    [
+        {{
+            "module_title": "Introduction to Python",
+            "topics": [
+                "Python Basics",
+                "Data Types",
+                "Control Structures"
+            ]
+        }},
+        {{
+            "module_title": "Advanced Python",
+            "topics": [
+                "Functions",
+                "Classes and Objects",
+                "File Handling"
+            ]
+        }}
+    ]
+
+    Syllabus:
+    {syllabus_text}
+    """
+
+    model = genai.GenerativeModel("gemini-1.5-pro")
+    response = model.generate_content(prompt)
+
+    if not response.text:
+        raise ValueError("No valid response from AI")
+
+    # Clean the response to extract JSON
+    cleaned_response = response.text.strip()
+    json_match = re.search(r"\[.*\]", cleaned_response, re.DOTALL)
+
+    if not json_match:
+        raise ValueError("No JSON found in AI response")
+
+    try:
+        return json.loads(json_match.group(0))
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON format: {e}")
+
+# Routes
+@app.route("/module_wise", methods=["POST"])
+def module_wise():
+    """Structure the syllabus into modules."""
+    try:
+        if "file" not in request.files:
+            return jsonify({"error": "Missing file"}), 400
+
+        # Get the uploaded file
+        file = request.files["file"]
+
+        # Save the file temporarily
+        file_path = os.path.join("temp.pdf")
+        file.save(file_path)
+
+        # Extract text from the PDF
+        syllabus_text = extract_text_from_pdf(file_path)
+
+        # Clean up the temporary file
+        os.remove(file_path)
+
+        if not syllabus_text:
+            return jsonify({"error": "Failed to extract text from PDF"}), 400
+
+        # Structure the syllabus into modules
+        modules = structure_syllabus_into_modules(syllabus_text)
+
+        return jsonify({"modules": modules})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/detect_ai", methods=["POST"])
@@ -575,8 +920,7 @@ def parse_json():
         return jsonify(parsed_json),200
     except Exception as e:
         # Handle errors gracefully
-        return jsonify({"error": str(e)}), 400
-
+        return jsonify({"error":str(e)}),400
 
 
 @app.route('/generate-feedback', methods=['POST'])
@@ -640,16 +984,14 @@ def generate_feedback():
             # Get feedback from Gemini
             feedback = ask_gemini_internal(prompt, API_KEY)
             print("Raw AI response:", feedback)  # Debugging log
-            time.sleep(8)
             # Check for errors in the AI response
             if "error" in feedback:
                 feedback_responses.append(feedback)
             else:
                 feedback_responses.append(feedback)
-
+            time.sleep(20)
             # Add a delay between API calls (e.g., 5 seconds)
 
-            time.sleep(10)
         return jsonify(feedback_responses)
     except Exception as e:
         print("Error in generate_feedback:", str(e))  # Debugging log
@@ -778,6 +1120,7 @@ def generate_speech(text, voice_id="d2b864ea-e642-4196-9b24-d8a928523a2b", model
         return None
 
 
+
 @app.route("/generate_speech", methods=["POST"])
 def generate_speech_api():
     data = request.json
@@ -792,6 +1135,34 @@ def generate_speech_api():
     else:
         return jsonify({"error": "Failed to generate speech"}), 500
 #######
+@app.route("/ask_gemini", methods=["GET"])
+def ask_gemini():
+    """
+    Sends a prompt to the Gemini API and returns the response.
 
+    Query Parameters:
+    - prompt: The complete formatted prompt including system instructions, source document, and question.
+    - api_key: The API key to authenticate the request.
+
+    Returns:
+    - JSON response containing Gemini's generated text.
+    """
+    prompt = request.args.get("prompt")
+    apikey = request.args.get("api_key")
+
+    if not prompt:
+        return jsonify({"error": "Missing 'prompt"}), 400
+
+    # Configure API
+    genai.configure(api_key=apikey)
+
+    # Initialize the model
+    model = genai.GenerativeModel("gemini-1.5-pro")
+
+    # Get response
+    response = model.generate_content(prompt)
+
+    return jsonify({"response": response.text})
+####
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

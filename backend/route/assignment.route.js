@@ -9,8 +9,9 @@ import {
   updateSubmissionResult,
   getAssignmentsWithSubmissions,
   getAssignmentsWithSubmissionsByAssignmentId,
-  getAssignmentsByStudentId,getStudentAssignmentResult,
-  getSubmissionResult
+  getAssignmentsByStudentId,
+  getStudentAssignmentResult,
+  getSubmissionResult,
 } from '../controler/assignment.controler.js'
 import upload from '../middlewares/upload.js'
 import multer from 'multer'
@@ -25,12 +26,7 @@ router.post(
   createAssignment
 )
 
-
-
-
-
-
-router.get('/result/:assignmentId/:studentId', getSubmissionResult);
+router.get('/result/:assignmentId/:studentId', getSubmissionResult)
 
 // Get assignments by class ID
 router.get('/class/:classId', getAssignmentsByClass)
@@ -81,12 +77,10 @@ router.get(
   '/teacher/assignment/:assignmentId',
   getAssignmentsWithSubmissionsByAssignmentId
 )
-// get result of assignement using studentid 
-router.get('/:studentId',getAssignmentsByStudentId);
+// get result of assignement using studentid
+router.get('/:studentId', getAssignmentsByStudentId)
 
-// get result of assignement using studentid 
-router.get('/:studentId',getAssignmentsByStudentId);
-
-
+// get result of assignement using studentid
+router.get('/:studentId', getAssignmentsByStudentId)
 
 export default router

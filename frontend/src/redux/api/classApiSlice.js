@@ -82,6 +82,14 @@ const classApiSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ['Class'], // Optional: For caching and invalidation
     }),
+    markCourseCompleted: builder.mutation({
+      query: (classId) => ({
+        url: `${CLASS_URL}/complete/${classId}`,
+        method: 'PUT',
+        credentials: 'include',
+      }),
+      invalidatesTags: ['Class'],
+    }),
   }),
 })
 
@@ -95,4 +103,5 @@ export const {
   useGetAllClassesQuery,
   useGetAllStudentsWithClassInfoQuery,
   useGetAllPublicClassesQuery,
+  useMarkCourseCompletedMutation,
 } = classApiSlice

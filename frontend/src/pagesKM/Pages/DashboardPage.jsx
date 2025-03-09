@@ -30,32 +30,32 @@ const DashboardPage = () => {
     const fetchData = async () => {
       try {
         const [quizRes, vivaRes, assignmentRes, dueDateRes] = await Promise.all([
-          axios.get(`${API}/quizresult/quizresultbystudentid/${userid}`),
-          axios.get(`${API}/vivaresult/getvivaresultbystudentid/${userid}`),
-          axios.get(`${API}/assignment/${userid}`),
-          axios.get(`${API}/dashboard/getduedate/${userid}`),
+          axios.get(`${API}/quizresult/quizresultbystudentid/${userid}`).catch(() => ({ data: [] })),
+          axios.get(`${API}/vivaresult/getvivaresultbystudentid/${userid}`).catch(() => ({ data: [] })),
+          axios.get(`${API}/assignment/${userid}`).catch(() => ({ data: [] })),
+          axios.get(`${API}/dashboard/getduedate/${userid}`).catch(() => ({ data: { assignments: [], quizzes: [], vivas: [] } })),
         ]);
-
-        setQuizResults(quizRes.data);
-        setVivaResults(vivaRes.data);
-        setAssignmentResults(assignmentRes.data);
-        console.log("Assignment Data:", assignmentRes.data);
-
+    
+        setQuizResults(quizRes?.data || []);
+        setVivaResults(vivaRes?.data || []);
+        setAssignmentResults(assignmentRes?.data || []);
+    
         // Combine all due dates into a single array
         const combinedDueDates = [
           ...(dueDateRes?.data?.assignments || []).map((item) => ({ ...item, type: 'Assignment' })),
           ...(dueDateRes?.data?.quizzes || []).map((item) => ({ ...item, type: 'Quiz' })),
           ...(dueDateRes?.data?.vivas || []).map((item) => ({ ...item, type: 'Viva' })),
         ];
-
+    
         // Sort by due date in ascending order
         combinedDueDates.sort((a, b) => new Date(a.duedate) - new Date(b.duedate));
-
+    
         setDueDates(combinedDueDates);
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchData();
@@ -278,16 +278,16 @@ const DashboardPage = () => {
                   {vivaResults.slice(0, 3).map((viva, index) => (
                     <motion.div key={index} whileHover={{ scale: 1.02 }}>
                       <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Viva: {viva.vivaId.vivaname}</Typography>
-                        <Typography variant="body2" sx={{ color: '#666' }}>Score: {viva.overallMark}</Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Viva: {viva?.vivaId?.vivaname}</Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>Score: {viva?.overallMark}</Typography>
                       </Paper>
                     </motion.div>
                   ))}
                   {userAssignments.slice(0, 3).map((assignment, index) => (
                     <motion.div key={index} whileHover={{ scale: 1.02 }}>
                       <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Assignment: {assignment.title}</Typography>
-                        <Typography variant="body2" sx={{ color: '#666' }}>Score: {assignment.score}</Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Assignment: {assignment?.title}</Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>Score: {assignment?.score}</Typography>
                       </Paper>
                     </motion.div>
                   ))}

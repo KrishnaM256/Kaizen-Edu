@@ -22,6 +22,7 @@ import profileroute from './route/profile.route.js'
 import mentoringRoutes from './route/mentoring.route.js'
 import studentRoutes from './route/student.route.js'
 import chatRoutes from './route/chatRoutes.js'
+import MentorMeet from './route/mentormeet.route.js'
 const Frontend_URL = process.env.Frontend_URL
 import { app, server } from './socket/server.js'
 
@@ -58,6 +59,7 @@ app.use('/timetable',timetableRoute);
 app.use('/profile',profileroute)
 app.use('/dashboard', Dashbaord)
 app.use('/mentor', mentoringRoutes)
+app.use('/mentormeet',MentorMeet)
 app.use('/student', studentRoutes)
 app.use('/timetable', timetableRoute)
 app.use('/chat', chatRoutes)

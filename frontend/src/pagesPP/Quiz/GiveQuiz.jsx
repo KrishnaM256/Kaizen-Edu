@@ -77,7 +77,7 @@ const GiveQuiz = () => {
     // Calculate percentage
     const totalPossibleMarks = quizData.questionAnswerSet.length * quizData.markperquestion;
     const percentage = (marks / totalPossibleMarks) * 100;
-    return percentage.toFixed(2); // Return percentage with 2 decimal places
+    return percentage.toFixed(0); // Return percentage with 2 decimal places
   };
 
   // Handle quiz submission

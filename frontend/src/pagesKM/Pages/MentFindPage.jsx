@@ -5,6 +5,9 @@ import Tab from '@mui/material/Tab'
 import Box from '@mui/material/Box'
 import MentorMenteePage from './MentorMenteePage'
 import ChattingPage from './ChattingPage'
+import VideoMeeting from '../../pagesPP/VideoCall/VideoMetting'
+import VideoMettingMentor from './VideoMettingMentor.jsx'
+import Videomenting from './Videomenting.jsx'
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props
@@ -62,7 +65,7 @@ export default function TimetablePage() {
         <ChattingPage />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={2}>
-        {/* <TimetableGeneratorPage /> */}
+        <Videomenting/>
       </CustomTabPanel>
     </Box>
   )

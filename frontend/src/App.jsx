@@ -23,6 +23,7 @@ import VideoMeeting from './pagesPP/VideoCall/VideoMetting.jsx'
 import RoomMeet from './pagesPP/VideoCall/RoomMeet.jsx'
 import Studentreport3 from './pages_rajas/Student_report3.jsx'
 import FeedbackPro from './pages_rajas/FeedbackPro.jsx'
+import RoomMeetMentor from './pagesKM/Pages/RoomMeetMentor.jsx'
 function App() {
   return (
     <BrowserRouter>
@@ -41,6 +42,7 @@ function App() {
           <Route path="/give-viva/:vivaId" element={<GiveViva />} />
           {/* <Route path="/room" element={<VideoMeeting />} />{} */}
           <Route path="/room/:classId/:roomId" element={<RoomMeet />} />
+          <Route path="/room/:mentorId/:studentId" element={<RoomMeetMentor/>} />
           <Route path="/class/:id" element={<ClassPage />} />
           <Route path="/lecture/:id" element={<LecturePage />} />
           <Route path="/temp" element={<temp/>}/>

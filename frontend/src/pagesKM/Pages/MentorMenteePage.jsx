@@ -21,7 +21,15 @@ import {
   CircularProgress,
   Divider,
   Box,
+  IconButton,
 } from '@mui/material'
+import {
+  VideoCall,
+  Close,
+  Shuffle,
+  Person,
+  MeetingRoom,
+} from '@mui/icons-material';
 import {
   FaPlus,
   FaEdit,
@@ -43,7 +51,7 @@ import {
   useGetStudentsByMentorQuery,
   useGetMentorByUserIdQuery,
 } from '../../redux/api/mentoringApiSlice'
-
+import VideoMettingMentor from './VideoMettingMentor.jsx'
 const skillsList = [
   'Python',
   'Data Science',
@@ -164,6 +172,8 @@ const MentorMenteePage = ({ classId }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isCreateMentorModalOpen, setIsCreateMentorModalOpen] = useState(false)
   const [isAssignMentorModalOpen, setIsAssignMentorModalOpen] = useState(false)
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+
   const [studentData, setStudentData] = useState({
     user: userInfo?._id,
     academicStatus: { gpa: 0, completedCredits: 0, currentSemester: 0 },
@@ -373,7 +383,7 @@ const MentorMenteePage = ({ classId }) => {
       internships: updatedInternships,
     })
   }
-
+console.log(studentData.user);
   const handleInternshipChange = (index, field, value) => {
     const updatedInternships = [...studentData?.internships]
     updatedInternships[index][field] = value
@@ -643,6 +653,14 @@ const MentorMenteePage = ({ classId }) => {
                         <Typography variant="body2">
                           Skills: {student?.skills?.join(', ')}
                         </Typography>
+                        <IconButton
+  onClick={() => {
+    setSelectedStudentId(student._id); // Set the selected student ID
+    setIsCallModalOpen(true); // Open the modal
+  }}
+>
+  <VideoCall />
+</IconButton>
                       </CardContent>
                     </Card>
                   </Grid>
@@ -1169,6 +1187,12 @@ const MentorMenteePage = ({ classId }) => {
           </Button>
         </DialogActions>
       </Dialog>
+      <VideoMettingMentor
+        open={isCallModalOpen}
+        onClose={() => setIsCallModalOpen(false)}
+        mentorId={userInfo?._id}
+        studentId={selectedStudentId}
+      />
     </Box>
   )
 }

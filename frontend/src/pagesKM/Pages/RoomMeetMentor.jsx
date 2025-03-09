@@ -45,7 +45,7 @@ function RoomMeet() {
     const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
       APP_ID,
       SECRET,
-      roomId,
+      mentorId,
       Date.now().toString(),
       "Your Name"
     );
@@ -116,7 +116,7 @@ function RoomMeet() {
         zpRef.current.destroy();
       }
     };
-  }, [callType, roomId, navigate]);
+  }, [callType, mentorId, navigate]);
 
   return (
     <Container

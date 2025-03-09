@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
 import {
   Dialog,
   DialogTitle,
@@ -13,46 +12,15 @@ import {
   Box,
   IconButton,
   Stack,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
 } from '@mui/material';
-import { Close, Shuffle, Person, VideoCall, MeetingRoom } from '@mui/icons-material';
-
-const API = 'http://127.0.0.1:5000'; // Replace with your actual API endpoint
+import { Close, Shuffle, Person, VideoCall } from '@mui/icons-material';
 
 const VideoMettingMentor = ({ open, onClose, mentorId, studentId }) => {
   const [roomId, setRoomId] = useState('');
-  const [meetings, setMeetings] = useState([]);
-  const [role, setRole] = useState(null);
   const navigate = useNavigate();
-console.log(studentId);
+
   // Access userInfo from Redux
   const { userInfo } = useSelector((state) => state.user);
-
-  // Update role state when userInfo changes
-  useEffect(() => {
-    if (userInfo?.role && userInfo._id) {
-      setRole(userInfo.role);
-    }
-  }, [userInfo]);
-
-  // Fetch meeting links for the class
-  const getMeetLinks = async () => {
-    try {
-      const response = await axios.get(`${API}/mentormeet/getmentormeet/${studentId}`);
-      setMeetings(response.data); // Assuming response.data is an array of meeting objects
-    } catch (error) {
-      console.error('Error fetching meeting links:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (  role) {
-      getMeetLinks();
-    }
-  }, [ role]);
 
   // Generate a random room ID
   const handleRoomIdGenerate = () => {
@@ -67,12 +35,7 @@ console.log(studentId);
       alert('Please Generate Room ID First');
       return;
     }
-    navigate(`/room/${mentorId}/${studentId}?type=one-on-one`);
-  };
-
-  // Handle joining a meeting link
-  const handleJoinMeeting = (url) => {
-    window.open(url, '_blank'); // Open the meeting link in a new tab
+    navigate(`/mentor/${mentorId}/${studentId}?type=one-on-one`);
   };
 
   return (
@@ -127,108 +90,62 @@ console.log(studentId);
               width: '100%',
             }}
           >
-            {role === 'teacher' && (
-              <>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>
-                  Start a Video Meeting
-                </Typography>
-                <Typography variant="subtitle1" sx={{ mb: 4, color: 'text.secondary' }}>
-                  Start a video meeting with a randomly generated Room ID
-                </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>
+              Start a Video Meeting
+            </Typography>
+            <Typography variant="subtitle1" sx={{ mb: 4, color: 'text.secondary' }}>
+              Start a video meeting with a randomly generated Room ID
+            </Typography>
 
-                <Stack spacing={2}>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Generated Room ID"
-                    value={roomId}
-                    InputProps={{
-                      readOnly: true,
-                    }}
-                    sx={{
-                      backgroundColor: 'background.paper',
-                      borderRadius: 1,
-                    }}
-                  />
-                  <Button
-                    variant="contained"
-                    startIcon={<Shuffle />}
-                    onClick={handleRoomIdGenerate}
-                    sx={{
-                      py: 1,
-                      fontWeight: 'bold',
-                      backgroundColor: '#3f51b5',
-                      '&:hover': {
-                        backgroundColor: '#303f9f',
-                      },
-                    }}
-                  >
-                    Generate Room ID
-                  </Button>
-                  <Button
-                    variant="contained"
-                    startIcon={<Person />}
-                    onClick={handleOneAndOneCall}
-                    disabled={!roomId}
-                    sx={{
-                      py: 1,
-                      fontWeight: 'bold',
-                      backgroundColor: '#4caf50',
-                      '&:hover': {
-                        backgroundColor: '#388e3c',
-                      },
-                      '&:disabled': {
-                        backgroundColor: '#bdbdbd',
-                      },
-                    }}
-                  >
-                    One-on-One Call
-                  </Button>
-                </Stack>
-              </>
-            )}
-            {role === 'student' && (
-              <>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>
-                  Available Meetings
-                </Typography>
-                <Typography variant="subtitle1" sx={{ mb: 4, color: 'text.secondary' }}>
-                  Join a meeting by clicking the "Join" button.
-                </Typography>
-
-                <List>
-                  {meetings.map((meeting) => (
-                    <ListItem key={meeting?._id} sx={{ borderBottom: '1px solid #e0e0e0' }}>
-                      {/* Left Side: Meeting Name */}
-                      <ListItemText
-                        primary={
-                          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                            {meeting?.name}
-                          </Typography>
-                        }
-                      />
-
-                      {/* Right Side: Join Button */}
-                      <ListItemSecondaryAction>
-                        <Button
-                          variant="contained"
-                          startIcon={<MeetingRoom />}
-                          onClick={() => handleJoinMeeting(meeting?.url)}
-                          sx={{
-                            backgroundColor: '#3f51b5',
-                            '&:hover': {
-                              backgroundColor: '#303f9f',
-                            },
-                          }}
-                        >
-                          Join
-                        </Button>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-              </>
-            )}
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Generated Room ID"
+                value={roomId}
+                InputProps={{
+                  readOnly: true,
+                }}
+                sx={{
+                  backgroundColor: 'background.paper',
+                  borderRadius: 1,
+                }}
+              />
+              <Button
+                variant="contained"
+                startIcon={<Shuffle />}
+                onClick={handleRoomIdGenerate}
+                sx={{
+                  py: 1,
+                  fontWeight: 'bold',
+                  backgroundColor: '#3f51b5',
+                  '&:hover': {
+                    backgroundColor: '#303f9f',
+                  },
+                }}
+              >
+                Generate Room ID
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<Person />}
+                onClick={handleOneAndOneCall}
+                disabled={!roomId}
+                sx={{
+                  py: 1,
+                  fontWeight: 'bold',
+                  backgroundColor: '#4caf50',
+                  '&:hover': {
+                    backgroundColor: '#388e3c',
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#bdbdbd',
+                  },
+                }}
+              >
+                One-on-One Call
+              </Button>
+            </Stack>
           </Box>
         </Box>
       </DialogContent>

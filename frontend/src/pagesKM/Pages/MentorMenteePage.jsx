@@ -242,7 +242,7 @@ const MentorMenteePage = ({ classId }) => {
     'Saturday',
     'Sunday',
   ]
-
+console.log(studentData);
   const handleCreateStudent = async () => {
     if (!studentData?.user || !studentData?.academicStatus?.gpa) {
       alert('Please fill all required fields')
@@ -449,7 +449,7 @@ console.log(studentData.user);
                 variant="contained"
                 startIcon={<FaEdit />}
                 onClick={() => {
-                  setSelectedStudentId(student?._id)
+                  setSelectedStudentId(student?.user)
                   setStudentData(currstudent)
                   setIsEditModalOpen(true)
                 }}

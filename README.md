@@ -111,15 +111,6 @@ Runs the AI-based assessment engine which handles:
 - 🧑‍🏫 Personalized insights for better teaching outcomes
 - 🔍 Detect plagiarism and ensure academic integrity
 
----
-
-## 📌 Team Kaizen
-
-- Team Number: **UI5224ZC**
-- College: Vasantdada Patil Pratishtan’s College of Engineering & Visual Arts
-- Email: [teampublicity77@gmail.com](mailto:teampublicity77@gmail.com)
-
----
 
 ## 📄 License
 

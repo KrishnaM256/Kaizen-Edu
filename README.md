@@ -3,11 +3,7 @@ Sure! Here's the complete `README.md` content, fully formatted and ready for cop
 ---
 
 ```markdown
-# 📚 Eduzen – AI-Powered Learning Management System (LMS)
-
-Eduzen is a powerful MERN-stack based Learning Management System developed for QUASAR 3.0 Hackathon. It aims to revolutionize modern education by combining smart automation, AI-driven assessments, and community-based learning.
-
-> 💡 Project by Team **Kaizen** | PS No: **PS12** | College: **VIT, Pune**
+# 📚  AI-Powered Learning Management System (LMS)
 
 ---
 

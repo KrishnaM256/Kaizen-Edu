@@ -15,8 +15,8 @@ function RoomMeet() {
   const [joined, setJoined] = useState(false);
   const [callType, setCallType] = useState("");
 
-  const APP_ID = 1199460465;
-  const SECRET = "841c556067da90c047308ae1ea221cdc";
+  const APP_ID = 1068716958;
+  const SECRET = "d3c587e442f64b8ad0da9800819b21a7";
 
   const addMeetingLink=async()=>{
     const meetinglink=window.location.href;
